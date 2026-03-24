@@ -102,6 +102,6 @@ The rendering uses the standard Mekanism upgrade items and respects depth testin
 If you want to contribute or build the mod yourself:
 
 ```bash
-git clone https://github.com/your-username/your-repo.git
+git clone https://github.com/rulanup/Mekanism-Card.git
 cd your-repo
 ./gradlew build
