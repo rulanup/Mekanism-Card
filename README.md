@@ -103,5 +103,5 @@ If you want to contribute or build the mod yourself:
 
 ```bash
 git clone https://github.com/rulanup/Mekanism-Card.git
-cd your-repo
+cd Mekanism-Card
 ./gradlew build
