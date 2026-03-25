@@ -42,6 +42,7 @@
 
   "tooltip.mekanism_card.current_upgrade": "Upgrade attuale: %s",
   "tooltip.mekanism_card.no_upgrade": "Upgrade attuale: Non selezionato",
+  "tooltip.mekanism_card.air_click_switch_mode": "Click dx aria: Cambia modalita installazione/rimozione",
   "tooltip.mekanism_card.sneak_air_click_switch_selection": "Accovacciati+Click dx aria: Cambia modalita selezione",
   "tooltip.mekanism_card.current_mode": "Modalita attuale: %s | %s",
   "tooltip.mekanism_card.mode.radius": "Modalita Raggio",

@@ -42,6 +42,7 @@
 
   "tooltip.mekanism_card.current_upgrade": "현재 업그레이드: %s",
   "tooltip.mekanism_card.no_upgrade": "현재 업그레이드: 선택되지 않음",
+  "tooltip.mekanism_card.air_click_switch_mode": "공기에서 우클릭: 설치/제거 모드 전환",
   "tooltip.mekanism_card.sneak_air_click_switch_selection": "スニーク+공기에서 우클릭: 선택 모드 전환",
   "tooltip.mekanism_card.current_mode": "현재 모드: %s | %s",
   "tooltip.mekanism_card.mode.radius": "반경 모드",

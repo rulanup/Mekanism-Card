@@ -42,6 +42,7 @@
 
   "tooltip.mekanism_card.current_upgrade": "Current upgrade: %s",
   "tooltip.mekanism_card.no_upgrade": "Current upgrade: Not selected",
+  "tooltip.mekanism_card.air_click_switch_mode": "Air right-click: Switch install/remove mode",
   "tooltip.mekanism_card.sneak_air_click_switch_selection": "Sneak + Air right-click: Switch selection mode",
   "tooltip.mekanism_card.current_mode": "Current mode: %s | %s",
   "tooltip.mekanism_card.mode.radius": "Radius Mode",

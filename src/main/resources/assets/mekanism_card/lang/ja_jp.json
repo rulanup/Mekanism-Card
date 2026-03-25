@@ -1,6 +1,8 @@
 {
-  "item.mekanism_card.mass_upgrade_configurator": "一括アップグレード設定",
+  "item.mekanism_card.mass_upgrade_configurator": "一括アップグレード設定器",
   "item.mekanism_card.memory_card": "メモリカード",
+  "item.mekanism_card.guide_book": "Mekanism Card ガイド",
+  "item.mekanism_card.guide_book.tooltip": "右クリックでガイドを開く",
   "itemGroup.mekanism_card": "Mekanism カード",
 
   "mekanism_card.mode.install": "インストールモード",
@@ -42,6 +44,7 @@
 
   "tooltip.mekanism_card.current_upgrade": "現在のアップグレード: %s",
   "tooltip.mekanism_card.no_upgrade": "現在のアップグレード: 未選択",
+  "tooltip.mekanism_card.air_click_switch_mode": "空気で右クリック：モード切替",
   "tooltip.mekanism_card.sneak_air_click_switch_selection": "スニーク+空気右クリック：選択モード切替",
   "tooltip.mekanism_card.current_mode": "現在のモード: %s | %s",
   "tooltip.mekanism_card.mode.radius": "半径モード",

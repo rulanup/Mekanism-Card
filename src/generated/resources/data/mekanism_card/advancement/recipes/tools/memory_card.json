@@ -1,0 +1,54 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_card": {
+      "conditions": {
+        "items": [
+          {
+            "items": "mekanism:configuration_card"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_circuit": {
+      "conditions": {
+        "items": [
+          {
+            "items": "mekanism:ultimate_control_circuit"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_hdpe": {
+      "conditions": {
+        "items": [
+          {
+            "items": "mekanism:hdpe_sheet"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "mekanism_card:memory_card"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_hdpe",
+      "has_circuit",
+      "has_card"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "mekanism_card:memory_card"
+    ]
+  }
+}

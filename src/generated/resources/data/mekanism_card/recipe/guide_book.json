@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:book"
+    },
+    {
+      "item": "mekanism_card:mass_upgrade_configurator"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "mekanism_card:guide_book"
+  }
+}

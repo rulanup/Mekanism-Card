@@ -42,6 +42,7 @@
 
   "tooltip.mekanism_card.current_upgrade": "Aktualne ulepszenie: %s",
   "tooltip.mekanism_card.no_upgrade": "Aktualne ulepszenie: Niewybrane",
+  "tooltip.mekanism_card.air_click_switch_mode": "PPM w powietrzu: Przelacz tryb instalacji/usuwania",
   "tooltip.mekanism_card.sneak_air_click_switch_selection": "Kucanie+PPM w powietrzu: Przelacz tryb wyboru",
   "tooltip.mekanism_card.current_mode": "Aktualny tryb: %s | %s",
   "tooltip.mekanism_card.mode.radius": "Tryb Promienia",

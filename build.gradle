@@ -121,6 +121,7 @@ configurations {
 dependencies {
     implementation "mekanism:Mekanism:${minecraft_version}-10.7.14.79"
     implementation "mekanism:Mekanism:${minecraft_version}-10.7.14.79:generators"
+    implementation "vazkii.patchouli:Patchouli:1.21.1-93-NEOFORGE"
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"

@@ -42,6 +42,7 @@
 
   "tooltip.mekanism_card.current_upgrade": "Текущее улучшение: %s",
   "tooltip.mekanism_card.no_upgrade": "Текущее улучшение: Не выбрано",
+  "tooltip.mekanism_card.air_click_switch_mode": "ПКМ по воздуху: Переключить режим установки/удаления",
   "tooltip.mekanism_card.sneak_air_click_switch_selection": "Присев+ПКМ по воздуху: Переключить режим выделения",
   "tooltip.mekanism_card.current_mode": "Текущий режим: %s | %s",
   "tooltip.mekanism_card.mode.radius": "Режим радиуса",

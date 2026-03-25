@@ -2,7 +2,7 @@ package com.mekanism.card;
 
 import com.mekanism.card.item.MassUpgradeConfigurator;
 import com.mekanism.card.item.MemoryCard;
-import mekanism.common.tile.base.TileEntityMekanism;
+import mekanism.api.IConfigCardAccess;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -27,14 +27,16 @@ public class ModEvents {
             }
 
             BlockPos pos = event.getPos();
-            if (!(event.getLevel().getBlockEntity(pos) instanceof TileEntityMekanism)) {
-                return;
-            }
+            boolean isTargetingMachine = event.getLevel().getBlockEntity(pos) instanceof IConfigCardAccess;
 
             if (player.isShiftKeyDown()) {
-                MemoryCard.handleCopyStatic(event.getLevel(), pos, player, stack);
-            } else {
-                MemoryCard.handlePasteStatic(event.getLevel(), pos, player, stack);
+                MemoryCard.handleClearStatic(player, stack);
+            } else if (isTargetingMachine) {
+                if (MemoryCard.hasData(stack)) {
+                    MemoryCard.handlePasteStatic(event.getLevel(), pos, player, stack);
+                } else {
+                    MemoryCard.handleCopyStatic(event.getLevel(), pos, player, stack);
+                }
             }
             event.setCanceled(true);
             return;
@@ -75,6 +77,23 @@ public class ModEvents {
                 event.setCanceled(true);
             } else {
                 // 非蹲下，什么也不做，但必须取消原版交互，否则可能打开 GUI
+                event.setCanceled(true);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
+        Player player = event.getEntity();
+        ItemStack stack = event.getItemStack();
+
+        if (stack.getItem() instanceof MemoryCard) {
+            if (event.getLevel().isClientSide()) {
+                return;
+            }
+
+            if (player.isShiftKeyDown()) {
+                MemoryCard.handleClearStatic(player, stack);
                 event.setCanceled(true);
             }
         }

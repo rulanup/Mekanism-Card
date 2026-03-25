@@ -1,6 +1,8 @@
 {
   "item.mekanism_card.mass_upgrade_configurator": "Mass Upgrade Configurator",
   "item.mekanism_card.memory_card": "Memory Card",
+  "item.mekanism_card.guide_book": "Mekanism Card Guide",
+  "item.mekanism_card.guide_book.tooltip": "Right-click to open guide",
   "itemGroup.mekanism_card": "Mekanism Card",
 
   "mekanism_card.mode.install": "Install Mode",
@@ -42,6 +44,7 @@
 
   "tooltip.mekanism_card.current_upgrade": "Current upgrade: %s",
   "tooltip.mekanism_card.no_upgrade": "Current upgrade: Not selected",
+  "tooltip.mekanism_card.air_click_switch_mode": "Air right-click: Switch install/remove mode",
   "tooltip.mekanism_card.sneak_air_click_switch_selection": "Sneak + Air right-click: Switch selection mode",
   "tooltip.mekanism_card.current_mode": "Current mode: %s | %s",
   "tooltip.mekanism_card.mode.radius": "Radius Mode",

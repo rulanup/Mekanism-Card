@@ -42,6 +42,7 @@
 
   "tooltip.mekanism_card.current_upgrade": "Mejora actual: %s",
   "tooltip.mekanism_card.no_upgrade": "Mejora actual: No seleccionada",
+  "tooltip.mekanism_card.air_click_switch_mode": "Clic derecho al aire: Cambiar modo instalación/eliminación",
   "tooltip.mekanism_card.sneak_air_click_switch_selection": "Clic derecho + Agacharse: Cambiar modo selección",
   "tooltip.mekanism_card.current_mode": "Modo actual: %s | %s",
   "tooltip.mekanism_card.mode.radius": "Modo Radio",
