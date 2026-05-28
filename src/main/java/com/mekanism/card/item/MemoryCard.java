@@ -142,6 +142,25 @@ public class MemoryCard extends net.minecraft.world.item.Item implements IFreque
                 .withStyle(ChatFormatting.YELLOW), true);
     }
 
+    public static void handleClearMachineDataStatic(Player player, ItemStack stack) {
+        CustomData customData = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
+        CompoundTag tag = customData.copyTag();
+        if (!tag.contains("MachineData")) {
+            player.displayClientMessage(Component.translatable("message.mekanism_card.memory_card.no_data")
+                    .withStyle(ChatFormatting.RED), true);
+            return;
+        }
+
+        tag.remove("MachineData");
+        if (tag.isEmpty()) {
+            stack.remove(DataComponents.CUSTOM_DATA);
+        } else {
+            stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+        }
+        player.displayClientMessage(Component.translatable("message.mekanism_card.memory_card.cleared")
+                .withStyle(ChatFormatting.YELLOW), true);
+    }
+
     public static void handlePasteStatic(Level level, BlockPos pos, Player player, ItemStack stack) {
         CustomData customData = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
         CompoundTag tag = customData.copyTag();

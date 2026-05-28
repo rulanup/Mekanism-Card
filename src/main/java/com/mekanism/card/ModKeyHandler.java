@@ -34,11 +34,18 @@ public class ModKeyHandler {
         Minecraft minecraft = Minecraft.getInstance();
         boolean ctrlDown = minecraft.options.keySprint.isDown();
         boolean shiftDown = minecraft.options.keyShift.isDown();
+        long window = minecraft.getWindow().getWindow();
+        boolean altDown = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_ALT) == GLFW.GLFW_PRESS
+                || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_ALT) == GLFW.GLFW_PRESS;
         boolean airTarget = minecraft.hitResult == null || minecraft.hitResult.getType() == HitResult.Type.MISS;
 
         ItemStack stack = player.getMainHandItem();
         if (stack.getItem() instanceof SuperFusionCard && airTarget) {
-            if (ctrlDown && shiftDown) {
+            if (altDown) {
+                net.neoforged.neoforge.network.PacketDistributor.sendToServer(FusionActionPayload.clearMemory());
+                event.setSwingHand(false);
+                event.setCanceled(true);
+            } else if (ctrlDown && shiftDown) {
                 net.neoforged.neoforge.network.PacketDistributor.sendToServer(new ToggleModePayload());
                 event.setSwingHand(false);
                 event.setCanceled(true);

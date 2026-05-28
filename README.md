@@ -28,6 +28,7 @@ Batch operation tools for Mekanism mod - save hours of tedious clicking when bui
 - Ctrl + Right-click air: Cycle fusion mode
 - Shift + Right-click air: Toggle module selection mode
 - Ctrl + Shift + Right-click air: Toggle area/single mode
+- Alt + Right-click air: Clear saved memory data
 - Right-click machine: Execute current fusion mode (blocks machine UI)
 - Middle-click machine: Install all supported upgrades (respects area/selection mode)
 
@@ -161,6 +162,7 @@ Book + Mass Upgrade Configurator
 5. **Switch modes**: Ctrl + Right-click air to cycle between Tier Install, Module Upgrade, and Memory Copy/Paste
 6. **Quick install all upgrades**: Middle-click a machine to install all supported upgrade modules at once
 7. **Area mode**: Ctrl + Shift + Right-click air to toggle area/single mode for batch operations
+8. **Clear memory**: Alt + Right-click air to clear saved memory data
 
 ### Ultimate Tier Installer
 

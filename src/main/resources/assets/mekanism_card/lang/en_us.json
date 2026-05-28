@@ -105,6 +105,7 @@
   "tooltip.mekanism_card.super_fusion.tier_usage": "Right-click machine: run the current fusion mode and block machine UI",
   "tooltip.mekanism_card.super_fusion.module_usage": "Ctrl + air right-click: switch fusion mode; Ctrl + Shift + air right-click: switch area/single",
   "tooltip.mekanism_card.super_fusion.selection_usage": "Shift + air right-click: toggle selection; in module mode, air right-click switches install/remove",
+  "tooltip.mekanism_card.super_fusion.memory_clear_usage": "Alt + air right-click: clear saved memory data",
   "tooltip.mekanism_card.super_fusion.mode.tier": "Tier Install",
   "tooltip.mekanism_card.super_fusion.mode.module": "Install Upgrades",
   "tooltip.mekanism_card.super_fusion.mode.memory": "Memory Copy/Paste",

@@ -107,6 +107,7 @@
   "tooltip.mekanism_card.super_fusion.tier_usage": "右键机器：按当前融合模式执行，并阻止机器界面打开",
   "tooltip.mekanism_card.super_fusion.module_usage": "Ctrl+右键空气：切换融合模式；Ctrl+Shift+右键空气：切换范围/单个",
   "tooltip.mekanism_card.super_fusion.selection_usage": "Shift+右键空气：切换选区；模块模式下右键空气切换安装/移除",
+  "tooltip.mekanism_card.super_fusion.memory_clear_usage": "Alt+右键空气：清除已保存的内存数据",
   "tooltip.mekanism_card.super_fusion.mode.tier": "等级安装",
   "tooltip.mekanism_card.super_fusion.mode.module": "安装升级",
   "tooltip.mekanism_card.super_fusion.mode.memory": "内存复制/粘贴",

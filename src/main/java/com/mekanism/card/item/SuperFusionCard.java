@@ -79,6 +79,10 @@ public class SuperFusionCard extends UltimateTierInstaller {
         moduleConfigurator().toggleSelectionMode(stack, player);
     }
 
+    public void clearMemoryData(ItemStack stack, Player player) {
+        MemoryCard.handleClearMachineDataStatic(player, stack);
+    }
+
     public void handleModuleOperation(Level level, BlockPos pos, Player player, ItemStack stack) {
         MassUpgradeConfigurator configurator = moduleConfigurator();
         if (configurator.isSelectionModeActive(stack)) {
@@ -143,6 +147,8 @@ public class SuperFusionCard extends UltimateTierInstaller {
                     .withStyle(ChatFormatting.GOLD));
             tooltip.add(Component.translatable("tooltip.mekanism_card.super_fusion.selection_usage")
                     .withStyle(ChatFormatting.AQUA));
+            tooltip.add(Component.translatable("tooltip.mekanism_card.super_fusion.memory_clear_usage")
+                    .withStyle(ChatFormatting.RED));
             tooltip.add(Component.translatable("tooltip.mekanism_card.network_support")
                     .withStyle(ChatFormatting.AQUA));
             tooltip.add(Component.translatable("tooltip.mekanism_card.network_priority")
