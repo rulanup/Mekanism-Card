@@ -104,6 +104,7 @@
   "message.mekanism_card.ultimate_installer.success": "机器已升级到终极等级（%d步）！",
   "tooltip.mekanism_card.ultimate_installer.extras_support": "检测到通用机械扩展：支持继续升级到无限等级（绝对 > 至尊 > 宇宙 > 无限）",
   "tooltip.mekanism_card.ultimate_installer.evolved_support": "检测到进化通用机械：支持继续升级到创造等级（超频 > 量子 > 致密 > 多元宇宙 > 创造）",
+  "tooltip.mekanism_card.ultimate_installer.moremachine_support": "检测到 MoreMachine：支持升级 MoreMachine 工厂与大型化学罐",
   "message.mekanism_card.super_fusion.mode_switched": "融合卡模式切换至：%s",
   "tooltip.mekanism_card.super_fusion.description": "融合等级安装、升级模块安装和内存复制/粘贴",
   "tooltip.mekanism_card.super_fusion.tier_usage": "右键机器：按当前融合模式执行，并阻止机器界面打开",

@@ -714,6 +714,12 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
                 tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.evolved_support")
                         .withStyle(ChatFormatting.AQUA));
             }
+            // 当 Mekanism: MoreMachine 加载时，显示 MoreMachine 联动支持说明
+            // MoreMachine 方块走标准 AttributeUpgradeable 路径，已天然兼容，此 tooltip 仅作可见性提示
+            if (com.mekanism.card.moremachine.MoreMachineIntegration.isLoaded()) {
+                tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.moremachine_support")
+                        .withStyle(ChatFormatting.DARK_AQUA));
+            }
             super.appendHoverText(stack, context, tooltip, flag);
             return;
         }
