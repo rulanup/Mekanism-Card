@@ -1,6 +1,7 @@
 package com.mekanism.card.item;
 
 import com.mekanism.card.ModDataComponents;
+import com.mekanism.card.extras.ExtrasIntegration;
 import com.mekanism.card.mekanism.QIOIntegration;
 import com.mekanism.card.util.NetworkItemSource;
 import mekanism.api.Action;
@@ -86,17 +87,27 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
 
         Holder<Block> block = state.getBlockHolder();
         AttributeUpgradeable upgradeableBlock = Attribute.get(block, AttributeUpgradeable.class);
-        if (upgradeableBlock == null) {
+        // 同时检查 Mekanism 的 AttributeUpgradeable 和 Extras 的 ExtraAttributeUpgradeable
+        if (upgradeableBlock == null && ExtrasIntegration.getExtraAttributeUpgradeable(block) == null) {
             player.displayClientMessage(Component.translatable("message.mekanism_card.ultimate_installer.not_upgradeable")
                     .withStyle(ChatFormatting.RED), true);
             return InteractionResult.FAIL;
         }
 
         BaseTier currentTier = Attribute.getBaseTier(block);
-        if (currentTier == BaseTier.ULTIMATE || currentTier == BaseTier.CREATIVE) {
+        // 当达到 ULTIMATE 时，若 Extras 已加载且方块是 Extras 可升级方块，则允许继续升级到 INFINITE
+        if (currentTier == BaseTier.CREATIVE) {
             player.displayClientMessage(Component.translatable("message.mekanism_card.ultimate_installer.already_ultimate")
                     .withStyle(ChatFormatting.YELLOW), true);
             return InteractionResult.FAIL;
+        }
+        if (currentTier == BaseTier.ULTIMATE) {
+            String advancedTier = ExtrasIntegration.getAdvancedTierName(block);
+            if (advancedTier == null || ExtrasIntegration.TIER_INFINITE.equals(advancedTier)) {
+                player.displayClientMessage(Component.translatable("message.mekanism_card.ultimate_installer.already_ultimate")
+                        .withStyle(ChatFormatting.YELLOW), true);
+                return InteractionResult.FAIL;
+            }
         }
 
         BlockEntity tile = WorldUtils.getTileEntity(world, pos);
@@ -118,7 +129,7 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
             return InteractionResult.FAIL;
         }
 
-        List<Item> requiredInstallers = getRequiredInstallers(currentTier);
+        List<Item> requiredInstallers = getRequiredInstallers(currentTier, block);
         boolean isCreative = player.isCreative();
 
         IStrictEnergyHandler energyHandler = Capabilities.STRICT_ENERGY.getCapability(handStack);
@@ -167,7 +178,10 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
         }
 
         Holder<Block> startBlock = startState.getBlockHolder();
-        if (Attribute.get(startBlock, AttributeUpgradeable.class) == null) {
+        // 同时检查 Mekanism 的 AttributeUpgradeable 和 Extras 的 ExtraAttributeUpgradeable
+        boolean isUpgradeable = Attribute.get(startBlock, AttributeUpgradeable.class) != null
+                || ExtrasIntegration.getExtraAttributeUpgradeable(startBlock) != null;
+        if (!isUpgradeable) {
             player.displayClientMessage(Component.translatable("message.mekanism_card.ultimate_installer.not_upgradeable")
                     .withStyle(ChatFormatting.RED), true);
             return InteractionResult.FAIL;
@@ -194,13 +208,21 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
 
             Holder<Block> block = currentState.getBlockHolder();
             AttributeUpgradeable upgradeable = Attribute.get(block, AttributeUpgradeable.class);
-            if (upgradeable == null) {
+            // 同时接受 Mekanism 的 AttributeUpgradeable 和 Extras 的 ExtraAttributeUpgradeable
+            if (upgradeable == null && ExtrasIntegration.getExtraAttributeUpgradeable(block) == null) {
                 continue;
             }
 
             BaseTier currentTier = Attribute.getBaseTier(block);
-            if (currentTier == BaseTier.ULTIMATE || currentTier == BaseTier.CREATIVE) {
+            // 跳过 CREATIVE；ULTIMATE 时只有 Extras 加载且方块还能继续升级才不跳过
+            if (currentTier == BaseTier.CREATIVE) {
                 continue;
+            }
+            if (currentTier == BaseTier.ULTIMATE) {
+                String advancedTier = ExtrasIntegration.getAdvancedTierName(block);
+                if (advancedTier == null || ExtrasIntegration.TIER_INFINITE.equals(advancedTier)) {
+                    continue;
+                }
             }
 
             BlockEntity tile = WorldUtils.getTileEntity(world, current);
@@ -244,7 +266,7 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
 
         Map<Item, Integer> totalInstallers = new HashMap<>();
         for (UpgradeTarget target : targets) {
-            List<Item> installers = getRequiredInstallers(target.currentTier);
+            List<Item> installers = getRequiredInstallers(target.currentTier, target.state.getBlockHolder());
             for (Item installer : installers) {
                 totalInstallers.merge(installer, 1, Integer::sum);
             }
@@ -270,7 +292,7 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
         if (upgradedCount > 0) {
             if (!isCreative) {
                 for (UpgradeTarget target : targets) {
-                    List<Item> installers = getRequiredInstallers(target.currentTier);
+                    List<Item> installers = getRequiredInstallers(target.currentTier, target.state.getBlockHolder());
                     consumeInstallers(itemSource, installers);
                 }
                 if (energyHandler != null) {
@@ -285,7 +307,7 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
         return InteractionResult.FAIL;
     }
 
-    private List<Item> getRequiredInstallers(@Nullable BaseTier currentTier) {
+    private List<Item> getRequiredInstallers(@Nullable BaseTier currentTier, @Nullable Holder<Block> blockHolder) {
         List<Item> installers = new ArrayList<>();
         BaseTier tier = currentTier;
 
@@ -296,6 +318,14 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
             }
             installers.add(installer);
             tier = getNextTier(tier);
+        }
+
+        // 当 BaseTier 已到达 ULTIMATE 且 Extras 已加载时，追加 AdvancedTier 链的 installers
+        if (tier == BaseTier.ULTIMATE && blockHolder != null && ExtrasIntegration.isLoaded()) {
+            String advancedTier = ExtrasIntegration.getAdvancedTierName(blockHolder);
+            if (advancedTier != null && !ExtrasIntegration.TIER_INFINITE.equals(advancedTier)) {
+                installers.addAll(ExtrasIntegration.getRequiredInstallersToInfinite(advancedTier));
+            }
         }
 
         return installers;
@@ -439,6 +469,99 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
             }
         }
 
+        // BaseTier 链到达 ULTIMATE 后，若 Extras 已加载，继续 AdvancedTier 链升级到 INFINITE
+        if (currentTier == BaseTier.ULTIMATE && ExtrasIntegration.isLoaded()) {
+            steps += performExtrasTierUpgrade(world, pos, currentState, player);
+        }
+
+        return steps;
+    }
+
+    /**
+     * 执行 Extras 的 AdvancedTier 升级链（ABSOLUTE → SUPREME → COSMIC → INFINITE）。
+     * 逻辑参考 Extras 的 ItemExtraTierInstaller.useOn，但本工具自己实现以便与 NetworkItemSource 联动消耗物品。
+     *
+     * @return 实际升级的步数
+     */
+    private int performExtrasTierUpgrade(Level world, BlockPos pos, BlockState initialState, Player player) {
+        BlockState currentState = initialState;
+        int steps = 0;
+
+        while (true) {
+            Holder<Block> currentBlock = currentState.getBlockHolder();
+            String currentAdvancedTier = ExtrasIntegration.getAdvancedTierName(currentBlock);
+            if (currentAdvancedTier == null || ExtrasIntegration.TIER_INFINITE.equals(currentAdvancedTier)) {
+                break;
+            }
+
+            String nextTierName = ExtrasIntegration.getNextTierName(currentAdvancedTier);
+            if (nextTierName == null) {
+                break;
+            }
+
+            Object upgradeable = ExtrasIntegration.getExtraAttributeUpgradeable(currentBlock);
+            if (upgradeable == null) {
+                break;
+            }
+
+            BlockEntity currentTile = WorldUtils.getTileEntity(world, pos);
+            if (!(currentTile instanceof ITierUpgradable upgradable)) {
+                break;
+            }
+
+            IUpgradeData upgradeData = upgradable.getUpgradeData(world.registryAccess());
+            if (upgradeData == null) {
+                break;
+            }
+
+            BlockState nextState = ExtrasIntegration.upgradeResult(upgradeable, currentState, nextTierName);
+            if (nextState == null || currentState == nextState) {
+                break;
+            }
+
+            AttributeHasBounding nextBounding = Attribute.get(nextState, AttributeHasBounding.class);
+            if (nextBounding != null) {
+                if (!nextBounding.handle(world, pos, nextState, pos, (level, boundingPos, mainPos) -> {
+                    Optional<BlockState> blockState = WorldUtils.getBlockState(level, boundingPos);
+                    if (blockState.isPresent()) {
+                        BlockState boundingCurrentState = blockState.get();
+                        if (boundingCurrentState.canBeReplaced()) {
+                            return true;
+                        } else if (boundingCurrentState.is(MekanismBlocks.BOUNDING_BLOCK)) {
+                            return mainPos.equals(BlockBounding.getMainBlockPos(level, boundingPos));
+                        }
+                    }
+                    return false;
+                })) {
+                    break;
+                }
+            }
+
+            if (!world.setBlockAndUpdate(pos, nextState)) {
+                break;
+            }
+
+            if (nextBounding != null) {
+                nextBounding.placeBoundingBlocks(world, pos, nextState);
+            }
+
+            TileEntityMekanism upgradedTile = WorldUtils.getTileEntity(TileEntityMekanism.class, world, pos);
+            if (upgradedTile == null) {
+                break;
+            }
+
+            if (currentTile instanceof ITileDirectional directional && directional.isDirectional()) {
+                upgradedTile.setFacing(directional.getDirection(), false);
+            }
+            upgradedTile.parseUpgradeData(world.registryAccess(), upgradeData);
+            upgradedTile.sendUpdatePacket();
+            upgradedTile.setChanged();
+            upgradedTile.invalidateCapabilitiesFull();
+
+            currentState = nextState;
+            steps++;
+        }
+
         return steps;
     }
 
@@ -458,6 +581,11 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
                     .withStyle(ChatFormatting.RED));
             tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.qio_bind_hint")
                     .withStyle(ChatFormatting.DARK_GRAY));
+            // 当 Extras 加载时，显示 Extras 联动支持说明
+            if (com.mekanism.card.extras.ExtrasIntegration.isLoaded()) {
+                tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.extras_support")
+                        .withStyle(ChatFormatting.LIGHT_PURPLE));
+            }
             super.appendHoverText(stack, context, tooltip, flag);
             return;
         }

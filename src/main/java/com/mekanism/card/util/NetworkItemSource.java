@@ -130,15 +130,21 @@ public final class NetworkItemSource {
 
     @Nullable
     public static Item getUpgradeItem(Upgrade upgrade) {
-        return switch (upgrade) {
-            case SPEED -> MekanismItems.SPEED_UPGRADE.get();
-            case ENERGY -> MekanismItems.ENERGY_UPGRADE.get();
-            case FILTER -> MekanismItems.FILTER_UPGRADE.get();
-            case CHEMICAL -> MekanismItems.CHEMICAL_UPGRADE.get();
-            case MUFFLING -> MekanismItems.MUFFLING_UPGRADE.get();
-            case ANCHOR -> MekanismItems.ANCHOR_UPGRADE.get();
-            case STONE_GENERATOR -> MekanismItems.STONE_GENERATOR_UPGRADE.get();
-        };
+        // 优先匹配 Mekanism 原生升级
+        switch (upgrade) {
+            case SPEED -> { return MekanismItems.SPEED_UPGRADE.get(); }
+            case ENERGY -> { return MekanismItems.ENERGY_UPGRADE.get(); }
+            case FILTER -> { return MekanismItems.FILTER_UPGRADE.get(); }
+            case CHEMICAL -> { return MekanismItems.CHEMICAL_UPGRADE.get(); }
+            case MUFFLING -> { return MekanismItems.MUFFLING_UPGRADE.get(); }
+            case ANCHOR -> { return MekanismItems.ANCHOR_UPGRADE.get(); }
+            case STONE_GENERATOR -> { return MekanismItems.STONE_GENERATOR_UPGRADE.get(); }
+            default -> {
+                // 当 Mekanism 原生不匹配时（可能是 Extras 注入的 STACK/IONIC_MEMBRANE/CREATIVE），
+                // 尝试从 Extras 联动获取对应物品
+                return com.mekanism.card.extras.ExtrasIntegration.getExtraUpgradeItem(upgrade);
+            }
+        }
     }
 
     private boolean isCreative() {
