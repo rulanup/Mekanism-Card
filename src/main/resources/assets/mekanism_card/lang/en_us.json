@@ -101,6 +101,7 @@
   "tooltip.mekanism_card.ultimate_installer.mode_area": "Area (Ctrl+Right-click to toggle)",
   "message.mekanism_card.ultimate_installer.success": "Machine upgraded to Ultimate tier (%d steps)!",
   "tooltip.mekanism_card.ultimate_installer.extras_support": "Mekanism Extras detected: supports upgrading to Infinite tier (Absolute > Supreme > Cosmic > Infinite)",
+  "tooltip.mekanism_card.ultimate_installer.evolved_support": "EvolvedMekanism detected: supports upgrading to Creative tier (Overclocked > Quantum > Dense > Multiversal > Creative)",
   "message.mekanism_card.super_fusion.mode_switched": "Fusion card mode switched to: %s",
   "tooltip.mekanism_card.super_fusion.description": "Combines tier installation, upgrade modules, and memory copy/paste",
   "tooltip.mekanism_card.super_fusion.tier_usage": "Right-click machine: run the current fusion mode and block machine UI",

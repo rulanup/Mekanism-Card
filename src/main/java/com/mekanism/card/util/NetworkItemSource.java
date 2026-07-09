@@ -140,9 +140,14 @@ public final class NetworkItemSource {
             case ANCHOR -> { return MekanismItems.ANCHOR_UPGRADE.get(); }
             case STONE_GENERATOR -> { return MekanismItems.STONE_GENERATOR_UPGRADE.get(); }
             default -> {
-                // 当 Mekanism 原生不匹配时（可能是 Extras 注入的 STACK/IONIC_MEMBRANE/CREATIVE），
-                // 尝试从 Extras 联动获取对应物品
-                return com.mekanism.card.extras.ExtrasIntegration.getExtraUpgradeItem(upgrade);
+                // 当 Mekanism 原生不匹配时，尝试从联动模组获取对应物品：
+                // - Extras 注入的 STACK/IONIC_MEMBRANE/CREATIVE
+                // - EvolvedMekanism 注入的 RADIOACTIVE（SOLAR/LUNAR 没有物品）
+                Item extras = com.mekanism.card.extras.ExtrasIntegration.getExtraUpgradeItem(upgrade);
+                if (extras != null) {
+                    return extras;
+                }
+                return com.mekanism.card.evolved.EvolvedIntegration.getEMUpgradeItem(upgrade);
             }
         }
     }
