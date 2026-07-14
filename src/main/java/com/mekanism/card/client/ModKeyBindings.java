@@ -26,7 +26,7 @@ import org.lwjgl.glfw.GLFW;
  *   <li><b>M 键</b>（key.mekanism_card.open_fusion_menu）— 手持超级融合卡时打开完整菜单</li>
  * </ul></p>
  */
-@EventBusSubscriber(modid = MekanismCard.MOD_ID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = MekanismCard.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public class ModKeyBindings {
 
     public static final String CATEGORY = "key.categories.mekanism_card";
@@ -56,7 +56,7 @@ public class ModKeyBindings {
     /**
      * 客户端 tick 时检测按键。放到 GAME bus 上是因为需要访问玩家状态。
      */
-    @EventBusSubscriber(modid = MekanismCard.MOD_ID, value = Dist.CLIENT)
+    @EventBusSubscriber(modid = MekanismCard.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
     public static class GameBus {
         @SubscribeEvent
         public static void onClientTick(ClientTickEvent.Pre event) {
