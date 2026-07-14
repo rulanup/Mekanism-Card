@@ -2,7 +2,7 @@
 
 [![Minecraft Version](https://img.shields.io/badge/Minecraft-1.21.1-blue)](https://www.minecraft.net)
 [![Mekanism Version](https://img.shields.io/badge/Mekanism-10.7.14%2B-green)](https://www.curseforge.com/minecraft/mc-mods/mekanism)
-[![NeoForge Version](https://img.shields.io/badge/NeoForge-21.1.215-orange)](https://neoforged.net/)
+[![NeoForge Version](https://img.shields.io/badge/NeoForge-21.1%2B-orange)](https://neoforged.net/)
 [![License](https://img.shields.io/badge/License-GPL%20v3.0-blue)](LICENSE)
 
 通用机械 (Mekanism) 模组的批量操作工具 - 在建造大型工厂时，为你节省大量繁琐的点击操作！
@@ -198,7 +198,7 @@ B E B
 
 **前置要求**：
 - Minecraft 1.21.1
-- NeoForge 21.1.220+
+- NeoForge 21.1+
 - Mekanism 10.7.14+
 - GuideME 21.1.15+
 - （可选）AE2 19.2+ 用于 AE2 网络联动
@@ -221,6 +221,8 @@ cd Mekanism-Card
 ```
 
 输出的 jar 文件位于 `build/libs/` 目录。
+
+开发依赖统一在 `dependencies.gradle` 中管理。客户端、服务端、GameTest 和数据生成的运行文件会分别保存在 `runs/<任务名>/` 下。
 
 运行数据生成：
 ```bash

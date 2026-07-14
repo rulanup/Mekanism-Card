@@ -2,7 +2,7 @@
 
 [![Minecraft Version](https://img.shields.io/badge/Minecraft-1.21.1-blue)](https://www.minecraft.net)
 [![Mekanism Version](https://img.shields.io/badge/Mekanism-10.7.14%2B-green)](https://www.curseforge.com/minecraft/mc-mods/mekanism)
-[![NeoForge Version](https://img.shields.io/badge/NeoForge-21.1.215-orange)](https://neoforged.net/)
+[![NeoForge Version](https://img.shields.io/badge/NeoForge-21.1%2B-orange)](https://neoforged.net/)
 [![License](https://img.shields.io/badge/License-GPL%20v3.0-blue)](LICENSE)
 
 Batch operation tools for Mekanism mod - save hours of tedious clicking when building large factories!
@@ -198,7 +198,7 @@ Book + Mass Upgrade Configurator
 
 **Requirements**:
 - Minecraft 1.21.1
-- NeoForge 21.1.220+
+- NeoForge 21.1+
 - Mekanism 10.7.14+
 - GuideME 21.1.15+
 - (Optional) AE2 19.2+ for AE2 network integration
@@ -221,6 +221,9 @@ cd Mekanism-Card
 ```
 
 Output jar will be in `build/libs/` directory.
+
+Development dependencies are managed in `dependencies.gradle`. Client, server,
+GameTest, and data-generation files are kept separately under `runs/<task>/`.
 
 Run data generation:
 ```bash
