@@ -46,7 +46,7 @@ public class SuperFusionCard extends UltimateTierInstaller {
             return values[(ordinal() + 1) % values.length];
         }
 
-        private static FusionMode byId(int id) {
+        public static FusionMode byId(int id) {
             FusionMode[] values = values();
             if (id < 0 || id >= values.length) {
                 return TIER_INSTALL;
@@ -69,10 +69,13 @@ public class SuperFusionCard extends UltimateTierInstaller {
     }
 
     public void cycleFusionMode(ItemStack stack, Player player) {
-        FusionMode next = getFusionMode(stack).next();
-        stack.set(ModDataComponents.FUSION_MODE.get(), next.ordinal());
-        player.displayClientMessage(Component.translatable("message.mekanism_card.super_fusion.mode_switched", next.getDisplayName())
-                .withStyle(next.getColor()), true);
+        setFusionMode(stack, player, getFusionMode(stack).next());
+    }
+
+    public void setFusionMode(ItemStack stack, Player player, FusionMode mode) {
+        stack.set(ModDataComponents.FUSION_MODE.get(), mode.ordinal());
+        player.displayClientMessage(Component.translatable("message.mekanism_card.super_fusion.mode_switched", mode.getDisplayName())
+                .withStyle(mode.getColor()), true);
     }
 
     public void toggleModuleSelectionMode(ItemStack stack, Player player) {

@@ -106,7 +106,7 @@
   "message.mekanism_card.super_fusion.mode_switched": "Fusion card mode switched to: %s",
   "tooltip.mekanism_card.super_fusion.description": "Combines tier installation, upgrade modules, and memory copy/paste",
   "tooltip.mekanism_card.super_fusion.tier_usage": "Right-click machine: run the current fusion mode and block machine UI",
-  "tooltip.mekanism_card.super_fusion.module_usage": "Ctrl + air right-click: switch fusion mode; Ctrl + Shift + air right-click: switch area/single",
+  "tooltip.mekanism_card.super_fusion.module_usage": "Hold G: choose fusion mode; Ctrl + Shift + air right-click: switch area/single",
   "tooltip.mekanism_card.super_fusion.selection_usage": "Shift + air right-click: toggle selection; in module mode, air right-click switches install/remove",
   "tooltip.mekanism_card.super_fusion.memory_clear_usage": "Alt + air right-click: clear saved memory data",
   "tooltip.mekanism_card.super_fusion.mode.tier": "Tier Install",
@@ -122,6 +122,7 @@
 
   "key.categories.mekanism_card": "Mekanism Card",
   "key.mekanism_card.open_fusion_menu": "Open Super Fusion Card Menu",
+  "key.mekanism_card.open_fusion_wheel": "Open Super Fusion Card Mode Wheel",
 
   "gui.mekanism_card.super_fusion.title": "Super Fusion Card",
   "gui.mekanism_card.super_fusion.button.cycle_fusion_mode": "Cycle Fusion Mode",
@@ -147,5 +148,6 @@
   "gui.mekanism_card.super_fusion.energy_short": "Energy",
   "gui.mekanism_card.super_fusion.esc_to_close": "Press ESC to close",
   "gui.mekanism_card.super_fusion.status_ready": "Ready",
-  "gui.mekanism_card.super_fusion.status_no_energy": "No energy"
+  "gui.mekanism_card.super_fusion.status_no_energy": "No energy",
+  "gui.mekanism_card.super_fusion.radial.title": "Select Fusion Mode"
 }

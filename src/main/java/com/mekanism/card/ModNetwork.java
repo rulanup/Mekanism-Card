@@ -2,6 +2,7 @@ package com.mekanism.card;
 
 import com.mekanism.card.network.FusionActionPayload;
 import com.mekanism.card.network.MiddleClickPayload;
+import com.mekanism.card.network.SetFusionModePayload;
 import com.mekanism.card.network.ToggleModePayload;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -17,5 +18,6 @@ public class ModNetwork {
         registrar.playToServer(ToggleModePayload.TYPE, ToggleModePayload.CODEC, ToggleModePayload::handle);
         registrar.playToServer(FusionActionPayload.TYPE, FusionActionPayload.CODEC, FusionActionPayload::handle);
         registrar.playToServer(MiddleClickPayload.TYPE, MiddleClickPayload.CODEC, MiddleClickPayload::handle);
+        registrar.playToServer(SetFusionModePayload.TYPE, SetFusionModePayload.CODEC, SetFusionModePayload::handle);
     }
 }

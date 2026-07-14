@@ -1,6 +1,7 @@
 package com.mekanism.card.client;
 
 import com.mekanism.card.MekanismCard;
+import com.mekanism.card.client.gui.SuperFusionRadialScreen;
 import com.mekanism.card.client.gui.SuperFusionCardScreen;
 import com.mekanism.card.item.SuperFusionCard;
 import net.minecraft.client.KeyMapping;
@@ -21,7 +22,8 @@ import org.lwjgl.glfw.GLFW;
  *
  * <p>当前注册的按键：
  * <ul>
- *   <li><b>M 键</b>（key.mekanism_card.open_fusion_menu）— 手持超级融合卡时打开菜单界面</li>
+ *   <li><b>G 键</b>（key.mekanism_card.open_fusion_wheel）— 手持超级融合卡时打开模式转盘</li>
+ *   <li><b>M 键</b>（key.mekanism_card.open_fusion_menu）— 手持超级融合卡时打开完整菜单</li>
  * </ul></p>
  */
 @EventBusSubscriber(modid = MekanismCard.MOD_ID, value = Dist.CLIENT)
@@ -37,9 +39,18 @@ public class ModKeyBindings {
             CATEGORY
     );
 
+    public static final KeyMapping OPEN_FUSION_WHEEL = new KeyMapping(
+            "key.mekanism_card.open_fusion_wheel",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_G,
+            CATEGORY
+    );
+
     @SubscribeEvent
     public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(OPEN_FUSION_MENU);
+        event.register(OPEN_FUSION_WHEEL);
     }
 
     /**
@@ -53,6 +64,13 @@ public class ModKeyBindings {
             LocalPlayer player = mc.player;
             if (player == null || mc.screen != null) {
                 return;
+            }
+            while (OPEN_FUSION_WHEEL.consumeClick()) {
+                ItemStack mainHand = player.getMainHandItem();
+                if (mainHand.getItem() instanceof SuperFusionCard) {
+                    mc.setScreen(new SuperFusionRadialScreen(mainHand));
+                    return;
+                }
             }
             while (OPEN_FUSION_MENU.consumeClick()) {
                 ItemStack mainHand = player.getMainHandItem();

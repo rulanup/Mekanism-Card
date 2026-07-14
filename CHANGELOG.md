@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added a hold-G radial wheel for direct Super Fusion Card mode selection.
 - Reorganized Gradle dependencies into `dependencies.gradle`.
 - Split development run directories by task under `runs/`.
 - Added the JDTE development runtime and client-only dependency set.
@@ -12,6 +13,7 @@
 
 ## 未发布
 
+- 新增按住 G 打开的超级融合卡模式转盘，可直接选择融合模式。
 - 将 Gradle 依赖整理到独立的 `dependencies.gradle`。
 - 将开发运行目录按任务拆分到 `runs/`。
 - 加入 JDTE 使用的开发运行时依赖与客户端专用依赖。

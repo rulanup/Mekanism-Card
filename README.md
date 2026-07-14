@@ -26,6 +26,7 @@ Batch operation tools for Mekanism mod - save hours of tedious clicking when bui
 
 **Controls**:
 - Ctrl + Right-click air: Cycle fusion mode
+- Hold G: Open the radial wheel and point at a fusion mode; release G to select it
 - Shift + Right-click air: Toggle module selection mode
 - Ctrl + Shift + Right-click air: Toggle area/single mode
 - Alt + Right-click air: Clear saved memory data
@@ -159,7 +160,7 @@ Book + Mass Upgrade Configurator
 2. **Charge it**: Place it in a Mekanism Energy Cube or compatible charger (needs 1,000 FE per tier upgrade)
 3. **(Optional) Bind AE2 network**: Place the item in a Wireless Access Point's link slot
 4. **(Optional) Bind QIO frequency**: Sneak + Right-click any QIO block with a frequency selected
-5. **Switch modes**: Ctrl + Right-click air to cycle between Tier Install, Module Upgrade, and Memory Copy/Paste
+5. **Switch modes**: Hold G, point at Tier Install, Module Upgrade, or Memory Copy/Paste, then release G
 6. **Quick install all upgrades**: Middle-click a machine to install all supported upgrade modules at once
 7. **Area mode**: Ctrl + Shift + Right-click air to toggle area/single mode for batch operations
 8. **Clear memory**: Alt + Right-click air to clear saved memory data

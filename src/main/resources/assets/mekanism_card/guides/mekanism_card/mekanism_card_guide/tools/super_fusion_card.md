@@ -22,6 +22,7 @@ The Super Fusion Card combines tier installation, upgrade module installation, a
 
 - Shift + air right-click: toggle module selection mode.
 - Ctrl + air right-click: switch fusion mode between Tier Install, Install Upgrades, and Memory Copy/Paste.
+- Hold G: open the mode wheel, point at a fusion mode, and release G to select it.
 - Ctrl + Shift + air right-click: switch area/single mode.
 - Alt + air right-click: clear saved memory data.
 - Right-click a machine: execute the current fusion mode and block the machine UI from opening.
