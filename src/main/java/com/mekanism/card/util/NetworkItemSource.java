@@ -140,6 +140,10 @@ public final class NetworkItemSource {
             case ANCHOR -> { return MekanismItems.ANCHOR_UPGRADE.get(); }
             case STONE_GENERATOR -> { return MekanismItems.STONE_GENERATOR_UPGRADE.get(); }
             default -> {
+                Item empowered = getEmpoweredUpgradeItem(upgrade);
+                if (empowered != null) {
+                    return empowered;
+                }
                 // 当 Mekanism 原生不匹配时，尝试从联动模组获取对应物品：
                 // - Extras 注入的 STACK/IONIC_MEMBRANE/CREATIVE
                 // - EvolvedMekanism 注入的 RADIOACTIVE（SOLAR/LUNAR 没有物品）
@@ -150,6 +154,24 @@ public final class NetworkItemSource {
                 return com.mekanism.card.evolved.EvolvedIntegration.getEMUpgradeItem(upgrade);
             }
         }
+    }
+
+    @Nullable
+    private static Item getEmpoweredUpgradeItem(Upgrade upgrade) {
+        if (!ModList.get().isLoaded("mekanism_empowered_core")) {
+            return null;
+        }
+        try {
+            Class<?> registry = Class.forName(
+                    "dev.lapis256.mekanism_empowered.core.common.upgrade.UpgradeItemRegistry");
+            Object holder = registry.getMethod("getItem", Upgrade.class).invoke(null, upgrade);
+            if (holder instanceof net.minecraft.core.Holder<?> itemHolder
+                    && itemHolder.value() instanceof Item item) {
+                return item;
+            }
+        } catch (ReflectiveOperationException ignored) {
+        }
+        return null;
     }
 
     private boolean isCreative() {

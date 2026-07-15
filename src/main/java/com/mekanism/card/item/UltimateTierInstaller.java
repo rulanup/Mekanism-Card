@@ -1,6 +1,7 @@
 package com.mekanism.card.item;
 
 import com.mekanism.card.ModDataComponents;
+import com.mekanism.card.compat.UltimineCompat;
 import com.mekanism.card.evolved.EvolvedIntegration;
 import com.mekanism.card.extras.ExtrasIntegration;
 import com.mekanism.card.mekanism.QIOIntegration;
@@ -27,6 +28,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -39,6 +41,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
@@ -65,13 +69,51 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
         }
 
         ItemStack handStack = player.getItemInHand(context.getHand());
-        boolean areaMode = handStack.getOrDefault(ModDataComponents.AREA_UPGRADE_MODE.get(), false);
-
-        if (areaMode) {
-            return handleAreaUpgrade(context, player, world, handStack);
-        } else {
-            return handleSingleUpgrade(context, player, world, handStack);
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
+                && UltimineCompat.isPressed(serverPlayer)) {
+            Collection<BlockPos> positions = UltimineCompat.getCachedPositions(
+                    serverPlayer, context.getClickedPos(), context.getClickedFace());
+            if (positions.size() > 1) {
+                return handleUltimineUpgrade(context, player, world, handStack, positions);
+            }
         }
+        return handleSingleUpgrade(context, player, world, handStack);
+    }
+
+    private InteractionResult handleUltimineUpgrade(UseOnContext context, Player player, Level world,
+                                                     ItemStack handStack, Collection<BlockPos> positions) {
+        return handlePositionBatch(world, positions, player, handStack, context.getHand(),
+                context.getClickedFace(), "message.mekanism_card.ultimate_installer.ultimine_success");
+    }
+
+    public void handleBatchSelection(Level level, Collection<BlockPos> positions, Player player, ItemStack stack) {
+        handlePositionBatch(level, positions, player, stack, InteractionHand.MAIN_HAND, Direction.UP,
+                "message.mekanism_card.ultimate_installer.selection_success");
+    }
+
+    private InteractionResult handlePositionBatch(Level world, Collection<BlockPos> positions, Player player,
+                                                  ItemStack handStack, InteractionHand hand, Direction face,
+                                                  String successTranslationKey) {
+        int upgradedMachines = 0;
+        for (BlockPos pos : new LinkedHashSet<>(positions)) {
+            if (!world.hasChunkAt(pos)) {
+                continue;
+            }
+            BlockHitResult hitResult = new BlockHitResult(
+                    Vec3.atCenterOf(pos), face, pos, false);
+            InteractionResult result = handleSingleUpgrade(
+                    new UseOnContext(player, hand, hitResult), player, world, handStack);
+            if (result.consumesAction()) {
+                upgradedMachines++;
+            }
+        }
+        if (upgradedMachines > 0) {
+            player.displayClientMessage(Component.translatable(
+                    successTranslationKey, upgradedMachines)
+                    .withStyle(ChatFormatting.GREEN), true);
+            return InteractionResult.CONSUME;
+        }
+        return InteractionResult.FAIL;
     }
 
     private InteractionResult handleSingleUpgrade(UseOnContext context, Player player, Level world, ItemStack handStack) {
@@ -107,7 +149,8 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
             boolean canUpgradeFurther = false;
             if (ExtrasIntegration.isLoaded()) {
                 String advancedTier = ExtrasIntegration.getAdvancedTierName(block);
-                canUpgradeFurther = advancedTier != null && !ExtrasIntegration.TIER_INFINITE.equals(advancedTier);
+                canUpgradeFurther = ExtrasIntegration.getExtraAttributeUpgradeable(block) != null
+                        && !ExtrasIntegration.TIER_INFINITE.equals(advancedTier);
             }
             if (!canUpgradeFurther && EvolvedIntegration.isLoaded()) {
                 canUpgradeFurther = EvolvedIntegration.supportsEvolvedMekanism(block, state);
@@ -132,7 +175,7 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
             return InteractionResult.FAIL;
         }
 
-        if (!tierUpgradable.canBeUpgraded()) {
+        if (!tierUpgradable.canBeUpgraded() && ExtrasIntegration.getExtraAttributeUpgradeable(block) == null) {
             player.displayClientMessage(Component.translatable("message.mekanism_card.ultimate_installer.cannot_upgrade")
                     .withStyle(ChatFormatting.RED), true);
             return InteractionResult.FAIL;
@@ -172,6 +215,196 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
         }
 
         return InteractionResult.FAIL;
+    }
+
+    public boolean upgradeToTier(Level world, BlockPos pos, Player player, ItemStack handStack, BaseTier desiredTier) {
+        return upgradeToTier(world, pos, player, handStack, desiredTier, null);
+    }
+
+    public boolean upgradeToTier(Level world, BlockPos pos, Player player, ItemStack handStack, BaseTier desiredTier,
+                                 @Nullable String desiredAdvancedTier) {
+        BlockState state = world.getBlockState(pos);
+        Holder<Block> block = state.getBlockHolder();
+        BaseTier currentTier = Attribute.getBaseTier(block);
+        String currentAdvancedTier = ExtrasIntegration.getAdvancedTierName(block);
+        if (desiredAdvancedTier == null) {
+            if (currentAdvancedTier != null || currentTier == desiredTier
+                    || currentTier != null && currentTier.ordinal() > desiredTier.ordinal()) {
+                return true;
+            }
+        } else {
+            int desiredAdvancedIndex = ExtrasIntegration.getTierIndex(desiredAdvancedTier);
+            int currentAdvancedIndex = ExtrasIntegration.getTierIndex(currentAdvancedTier);
+            if (desiredAdvancedIndex == Integer.MIN_VALUE) {
+                return false;
+            }
+            if (currentAdvancedIndex >= desiredAdvancedIndex) {
+                return true;
+            }
+            if (currentTier != null && currentTier.ordinal() > desiredTier.ordinal()) {
+                return false;
+            }
+        }
+
+        boolean needsBaseUpgrade = currentTier != desiredTier;
+        boolean needsAdvancedUpgrade = desiredAdvancedTier != null;
+        AttributeUpgradeable baseUpgradeable = Attribute.get(block, AttributeUpgradeable.class);
+        Object extraUpgradeable = ExtrasIntegration.getExtraAttributeUpgradeable(block);
+        if (needsBaseUpgrade && baseUpgradeable == null
+                || needsAdvancedUpgrade && !needsBaseUpgrade && extraUpgradeable == null
+                || !(WorldUtils.getTileEntity(world, pos) instanceof ITierUpgradable tierUpgradable)
+                || needsBaseUpgrade && !tierUpgradable.canBeUpgraded()) {
+            return false;
+        }
+
+        List<Item> requiredInstallers = new ArrayList<>();
+        if (needsBaseUpgrade) {
+            List<Item> baseInstallers = getRequiredInstallersToTier(currentTier, desiredTier);
+            if (baseInstallers.isEmpty()) {
+                return false;
+            }
+            requiredInstallers.addAll(baseInstallers);
+        }
+        if (needsAdvancedUpgrade) {
+            List<Item> advancedInstallers = ExtrasIntegration.getRequiredInstallersToTier(
+                    currentAdvancedTier, desiredAdvancedTier);
+            if (advancedInstallers.isEmpty()) {
+                return false;
+            }
+            requiredInstallers.addAll(advancedInstallers);
+        }
+        if (requiredInstallers.isEmpty()) {
+            return false;
+        }
+        boolean creative = player.isCreative();
+        IStrictEnergyHandler energyHandler = Capabilities.STRICT_ENERGY.getCapability(handStack);
+        if (!creative && (energyHandler == null || energyHandler.getEnergy(0) < ENERGY_PER_UPGRADE)) {
+            player.displayClientMessage(Component.translatable("message.mekanism_card.ultimate_installer.no_energy")
+                    .withStyle(ChatFormatting.RED), true);
+            return false;
+        }
+        NetworkItemSource itemSource = NetworkItemSource.create(world, player, handStack);
+        if (!creative && !hasRequiredInstallers(requiredInstallers, itemSource)) {
+            showMissingInstallersMessage(player, requiredInstallers, itemSource);
+            return false;
+        }
+
+        int steps = needsBaseUpgrade
+                ? performTierUpgradeTo(world, pos, state, currentTier, desiredTier)
+                : 0;
+        if (needsAdvancedUpgrade) {
+            BlockState advancedState = world.getBlockState(pos);
+            steps += performExtrasTierUpgradeTo(world, pos, advancedState, desiredAdvancedTier);
+        }
+        Holder<Block> finalBlock = world.getBlockState(pos).getBlockHolder();
+        BaseTier finalTier = Attribute.getBaseTier(finalBlock);
+        String finalAdvancedTier = ExtrasIntegration.getAdvancedTierName(finalBlock);
+        if (steps <= 0 || finalTier != desiredTier
+                || desiredAdvancedTier != null && !desiredAdvancedTier.equals(finalAdvancedTier)) {
+            return false;
+        }
+        if (!creative) {
+            consumeInstallers(itemSource, requiredInstallers);
+            energyHandler.extractEnergy(0, ENERGY_PER_UPGRADE, Action.EXECUTE);
+        }
+        return true;
+    }
+
+    private List<Item> getRequiredInstallersToTier(@Nullable BaseTier currentTier, BaseTier desiredTier) {
+        List<Item> installers = new ArrayList<>();
+        BaseTier tier = currentTier;
+        while (tier != desiredTier) {
+            BaseTier next = getNextTierToward(tier);
+            if (next == null || next.ordinal() > desiredTier.ordinal()) {
+                return List.of();
+            }
+            Item installer = getInstallerForTransition(tier, next);
+            if (installer == null) {
+                return List.of();
+            }
+            installers.add(installer);
+            tier = next;
+        }
+        return installers;
+    }
+
+    @Nullable
+    private BaseTier getNextTierToward(@Nullable BaseTier currentTier) {
+        BaseTier standardNext = getNextTier(currentTier);
+        if (standardNext != null) {
+            return standardNext;
+        }
+        return currentTier == null ? null : EvolvedIntegration.getNextTier(currentTier);
+    }
+
+    @Nullable
+    private Item getInstallerForTransition(@Nullable BaseTier currentTier, BaseTier nextTier) {
+        Item standard = getInstallerForNextTier(currentTier);
+        if (standard != null) {
+            return standard;
+        }
+        String tierName = EvolvedIntegration.getTierLowerName(nextTier);
+        return tierName == null ? null : EvolvedIntegration.getTierInstallerItem(tierName);
+    }
+
+    private int performTierUpgradeTo(Level world, BlockPos pos, BlockState initialState,
+                                     @Nullable BaseTier startTier, BaseTier desiredTier) {
+        BlockState currentState = initialState;
+        BaseTier currentTier = startTier;
+        int steps = 0;
+        while (currentTier != desiredTier) {
+            AttributeUpgradeable upgradeable = Attribute.get(currentState.getBlockHolder(), AttributeUpgradeable.class);
+            BlockEntity currentTile = WorldUtils.getTileEntity(world, pos);
+            if (upgradeable == null || !(currentTile instanceof ITierUpgradable upgradable)) {
+                break;
+            }
+            IUpgradeData upgradeData = upgradable.getUpgradeData(world.registryAccess());
+            if (upgradeData == null) {
+                break;
+            }
+            BlockState nextState = upgradeable.upgradeResult(currentState, desiredTier);
+            if (currentState == nextState) {
+                break;
+            }
+            AttributeHasBounding nextBounding = Attribute.get(nextState, AttributeHasBounding.class);
+            if (nextBounding != null && !nextBounding.handle(world, pos, nextState, pos,
+                    (level, boundingPos, mainPos) -> {
+                        Optional<BlockState> blockState = WorldUtils.getBlockState(level, boundingPos);
+                        if (blockState.isEmpty()) {
+                            return false;
+                        }
+                        BlockState boundingState = blockState.get();
+                        return boundingState.canBeReplaced()
+                                || boundingState.is(MekanismBlocks.BOUNDING_BLOCK)
+                                && mainPos.equals(BlockBounding.getMainBlockPos(level, boundingPos));
+                    })) {
+                break;
+            }
+            if (!world.setBlockAndUpdate(pos, nextState)) {
+                break;
+            }
+            if (nextBounding != null) {
+                nextBounding.placeBoundingBlocks(world, pos, nextState);
+            }
+            TileEntityMekanism upgradedTile = WorldUtils.getTileEntity(TileEntityMekanism.class, world, pos);
+            if (upgradedTile == null) {
+                break;
+            }
+            if (currentTile instanceof ITileDirectional directional && directional.isDirectional()) {
+                upgradedTile.setFacing(directional.getDirection(), false);
+            }
+            upgradedTile.parseUpgradeData(world.registryAccess(), upgradeData);
+            upgradedTile.sendUpdatePacket();
+            upgradedTile.setChanged();
+            upgradedTile.invalidateCapabilitiesFull();
+            currentState = nextState;
+            currentTier = Attribute.getBaseTier(currentState.getBlockHolder());
+            steps++;
+            if (currentTier == null || currentTier.ordinal() > desiredTier.ordinal()) {
+                break;
+            }
+        }
+        return steps;
     }
 
     private InteractionResult handleAreaUpgrade(UseOnContext context, Player player, Level world, ItemStack handStack) {
@@ -231,7 +464,8 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
                 boolean canUpgradeFurther = false;
                 if (ExtrasIntegration.isLoaded()) {
                     String advancedTier = ExtrasIntegration.getAdvancedTierName(block);
-                    canUpgradeFurther = advancedTier != null && !ExtrasIntegration.TIER_INFINITE.equals(advancedTier);
+                    canUpgradeFurther = ExtrasIntegration.getExtraAttributeUpgradeable(block) != null
+                            && !ExtrasIntegration.TIER_INFINITE.equals(advancedTier);
                 }
                 if (!canUpgradeFurther && EvolvedIntegration.isLoaded()) {
                     canUpgradeFurther = EvolvedIntegration.supportsEvolvedMekanism(block, currentState);
@@ -246,7 +480,9 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
                 continue;
             }
 
-            if (!(tile instanceof ITierUpgradable tierUpgradable) || !tierUpgradable.canBeUpgraded()) {
+            if (!(tile instanceof ITierUpgradable tierUpgradable)
+                    || !tierUpgradable.canBeUpgraded()
+                    && ExtrasIntegration.getExtraAttributeUpgradeable(block) == null) {
                 continue;
             }
 
@@ -341,8 +577,10 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
             // Extras 链：ULTIMATE → absolute → supreme → cosmic → infinite
             if (ExtrasIntegration.isLoaded()) {
                 String advancedTier = ExtrasIntegration.getAdvancedTierName(blockHolder);
-                if (advancedTier != null && !ExtrasIntegration.TIER_INFINITE.equals(advancedTier)) {
-                    installers.addAll(ExtrasIntegration.getRequiredInstallersToInfinite(advancedTier));
+                if (ExtrasIntegration.getExtraAttributeUpgradeable(blockHolder) != null
+                        && !ExtrasIntegration.TIER_INFINITE.equals(advancedTier)) {
+                    installers.addAll(ExtrasIntegration.getRequiredInstallersToTier(
+                            advancedTier, ExtrasIntegration.TIER_INFINITE));
                 }
             }
             // EvolvedMekanism 链：ULTIMATE → overclocked → quantum → dense → multiversal → creative
@@ -607,17 +845,26 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
      * @return 实际升级的步数
      */
     private int performExtrasTierUpgrade(Level world, BlockPos pos, BlockState initialState, Player player) {
+        return performExtrasTierUpgradeTo(world, pos, initialState, ExtrasIntegration.TIER_INFINITE);
+    }
+
+    private int performExtrasTierUpgradeTo(Level world, BlockPos pos, BlockState initialState,
+                                           String desiredAdvancedTier) {
         BlockState currentState = initialState;
         int steps = 0;
 
         while (true) {
             Holder<Block> currentBlock = currentState.getBlockHolder();
             String currentAdvancedTier = ExtrasIntegration.getAdvancedTierName(currentBlock);
-            if (currentAdvancedTier == null || ExtrasIntegration.TIER_INFINITE.equals(currentAdvancedTier)) {
+            if (desiredAdvancedTier.equals(currentAdvancedTier)
+                    || ExtrasIntegration.getTierIndex(currentAdvancedTier)
+                    > ExtrasIntegration.getTierIndex(desiredAdvancedTier)) {
                 break;
             }
 
-            String nextTierName = ExtrasIntegration.getNextTierName(currentAdvancedTier);
+            String nextTierName = currentAdvancedTier == null
+                    ? ExtrasIntegration.TIER_ABSOLUTE
+                    : ExtrasIntegration.getNextTierName(currentAdvancedTier);
             if (nextTierName == null) {
                 break;
             }
@@ -694,16 +941,19 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
         if (TooltipHelper.isDescriptionKeyDown()) {
             tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.description")
                     .withStyle(ChatFormatting.GRAY));
-            tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.usage")
-                    .withStyle(ChatFormatting.DARK_GREEN));
+            tooltip.add(TooltipHelper.shortcutLine("tooltip.mekanism_card.shortcut.tier_execute",
+                    "tooltip.mekanism_card.key.right_machine"));
+            tooltip.add(TooltipHelper.selectionShortcutLine("tooltip.mekanism_card.shortcut.tier_batch"));
+            tooltip.add(TooltipHelper.shortcutLine("tooltip.mekanism_card.shortcut.tier_ultimine",
+                    "tooltip.mekanism_card.key.ultimine_right"));
             tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.ae2_support")
                     .withStyle(ChatFormatting.AQUA));
             tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.qio_support")
                     .withStyle(ChatFormatting.LIGHT_PURPLE));
             tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.consumes")
                     .withStyle(ChatFormatting.RED));
-            tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.qio_bind_hint")
-                    .withStyle(ChatFormatting.DARK_GRAY));
+            tooltip.add(TooltipHelper.shortcutLine("tooltip.mekanism_card.shortcut.qio_bind",
+                    "tooltip.mekanism_card.key.shift_right_qio"));
             // 当 Extras 加载时，显示 Extras 联动支持说明
             if (com.mekanism.card.extras.ExtrasIntegration.isLoaded()) {
                 tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.extras_support")
@@ -729,12 +979,14 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
             StorageUtils.addStoredEnergy(stack, tooltip, false);
         }
 
-        boolean areaMode = stack.getOrDefault(ModDataComponents.AREA_UPGRADE_MODE.get(), false);
-        tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.mode",
-                        areaMode
-                                ? Component.translatable("tooltip.mekanism_card.ultimate_installer.mode_area")
-                                : Component.translatable("tooltip.mekanism_card.ultimate_installer.mode_single"))
-                .withStyle(ChatFormatting.GOLD));
+        if (supportsAreaMode()) {
+            boolean areaMode = stack.getOrDefault(ModDataComponents.AREA_UPGRADE_MODE.get(), false);
+            tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.mode",
+                            areaMode
+                                    ? Component.translatable("tooltip.mekanism_card.ultimate_installer.mode_area")
+                                    : Component.translatable("tooltip.mekanism_card.ultimate_installer.mode_single"))
+                    .withStyle(ChatFormatting.GOLD));
+        }
 
         if (net.neoforged.fml.ModList.get().isLoaded("ae2")) {
             try {
@@ -778,6 +1030,10 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
         TooltipHelper.addHoldForDescription(tooltip);
 
         super.appendHoverText(stack, context, tooltip, flag);
+    }
+
+    protected boolean supportsAreaMode() {
+        return false;
     }
 
     @Override

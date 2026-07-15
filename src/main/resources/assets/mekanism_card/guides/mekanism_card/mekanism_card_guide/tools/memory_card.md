@@ -6,7 +6,7 @@ categories:
 navigation:
   title: Memory Card
   icon: mekanism_card:memory_card
-  parent: tools.md
+  parent: index.md
   position: 2
 ---
 
@@ -33,6 +33,13 @@ To paste configuration:
 - Right-click a machine: apply stored config to the target machine. This consumes upgrade cards if needed.
 
 The target must be the same machine type, and your inventory or bound AE2/QIO network must contain enough upgrade cards.
+
+## Batch Pasting
+
+- Hold the selection key (Left Ctrl by default) and left-click two corners: paste to matching machines in that cuboid.
+- Hold the FTB Ultimine key while right-clicking: paste to matching machines in its current selection.
+
+Normal right-click only pastes to the clicked machine.
 
 ## Network Storage
 

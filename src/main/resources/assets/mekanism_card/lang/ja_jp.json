@@ -6,7 +6,7 @@
   "itemGroup.mekanism_card": "Mekanism カード",
 
   "mekanism_card.mode.install": "インストールモード",
-  "mekanism_card.mode.remove": "削除モード",
+  "mekanism_card.mode.clear": "クリアモード",
 
   "mekanism_card.memory_card.mode.copy": "コピーモード",
   "mekanism_card.memory_card.mode.paste": "貼り付けモード",

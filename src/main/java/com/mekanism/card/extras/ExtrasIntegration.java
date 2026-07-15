@@ -257,25 +257,49 @@ public final class ExtrasIntegration {
         };
     }
 
+    public static int getTierIndex(@Nullable String tierName) {
+        if (tierName == null) {
+            return -1;
+        }
+        return switch (tierName) {
+            case TIER_ABSOLUTE -> 0;
+            case TIER_SUPREME -> 1;
+            case TIER_COSMIC -> 2;
+            case TIER_INFINITE -> 3;
+            default -> Integer.MIN_VALUE;
+        };
+    }
+
+    public static java.util.List<Item> getRequiredInstallersToTier(@Nullable String currentTierName,
+                                                                   String desiredTierName) {
+        int currentIndex = getTierIndex(currentTierName);
+        int desiredIndex = getTierIndex(desiredTierName);
+        if (currentIndex == Integer.MIN_VALUE || desiredIndex == Integer.MIN_VALUE || currentIndex >= desiredIndex) {
+            return java.util.List.of();
+        }
+        java.util.List<Item> installers = new java.util.ArrayList<>();
+        for (int index = currentIndex + 1; index <= desiredIndex; index++) {
+            String tierName = switch (index) {
+                case 0 -> TIER_ABSOLUTE;
+                case 1 -> TIER_SUPREME;
+                case 2 -> TIER_COSMIC;
+                case 3 -> TIER_INFINITE;
+                default -> null;
+            };
+            Item installer = tierName == null ? null : getTierInstallerItem(tierName);
+            if (installer == null) {
+                return java.util.List.of();
+            }
+            installers.add(installer);
+        }
+        return installers;
+    }
+
     /**
      * 获取从当前 AdvancedTier 升级到 INFINITE 所需的所有 TierInstaller 物品列表（按顺序）。
      * 例如当前是 "absolute"，返回 [SUPREME_TIER_INSTALLER, COSMIC_TIER_INSTALLER, INFINITE_TIER_INSTALLER]。
      */
     public static java.util.List<Item> getRequiredInstallersToInfinite(String currentTierName) {
-        java.util.List<Item> installers = new java.util.ArrayList<>();
-        String tier = currentTierName;
-        while (tier != null && !TIER_INFINITE.equals(tier)) {
-            String nextTier = getNextTierName(tier);
-            if (nextTier == null) {
-                break;
-            }
-            Item installer = getTierInstallerItem(nextTier);
-            if (installer == null) {
-                break;
-            }
-            installers.add(installer);
-            tier = nextTier;
-        }
-        return installers;
+        return getRequiredInstallersToTier(currentTierName, TIER_INFINITE);
     }
 }

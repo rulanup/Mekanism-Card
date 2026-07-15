@@ -1,48 +1,50 @@
 package com.mekanism.card.client.gui;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mekanism.card.ModDataComponents;
 import com.mekanism.card.MekanismCard;
 import com.mekanism.card.item.MassUpgradeConfigurator;
 import com.mekanism.card.item.SuperFusionCard;
 import com.mekanism.card.network.FusionActionPayload;
-import com.mekanism.card.network.ToggleModePayload;
+import com.mekanism.card.network.ToolModePayload;
+import com.mekanism.card.network.TargetModePayload;
 import mekanism.api.energy.IStrictEnergyHandler;
 import mekanism.common.capabilities.Capabilities;
+import mekanism.client.gui.GuiUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-/**
- * 超级融合卡的菜单界面（LLMERA 风格）。
- *
- * <p>视觉风格与 LLMERA 的 ConfigScreen 保持一致：
- * 深蓝灰背景 + 亮蓝色 1px 边框 + 浅蓝白色主文字 + 琥珀色强调。</p>
- *
- * <p>状态同步：render 时实时从 player.getMainHandItem() 获取最新 stack；
- * 按钮点击做客户端预测立即响应，同时发送网络包到服务端。</p>
- */
 public class SuperFusionCardScreen extends Screen {
 
-    // 面板尺寸
-    private static final int PANEL_WIDTH = 300;
-    private static final int PANEL_HEIGHT = 240;
-
-    // LLMERA 配色
-    private static final int COLOR_BG = 0xEE10151C;
-    private static final int COLOR_BORDER = 0xFF6EA8FE;
-    private static final int COLOR_TEXT = 0xE8EEF7;
-    private static final int COLOR_LABEL = 0xAFC8FF;
-    private static final int COLOR_ACCENT = 0xFFFFD080;
-    private static final int COLOR_OK = 0x9BE89B;
-    private static final int COLOR_WARN = 0xFFAA66;
-    private static final int COLOR_DIM = 0x888888;
+    private static final int PANEL_WIDTH = 176;
+    private static final int PANEL_HEIGHT = 116;
+    private static final int PADDING = 8;
+    private static final int COLOR_PANEL = 0xFFC6C6C6;
+    private static final int COLOR_HIGHLIGHT = 0xFFFFFFFF;
+    private static final int COLOR_MID_HIGHLIGHT = 0xFFDBDBDB;
+    private static final int COLOR_SHADOW = 0xFF555555;
+    private static final int COLOR_DEEP_SHADOW = 0xFF373737;
+    private static final int COLOR_RECESSED = 0xFF9B9B9B;
+    private static final int COLOR_TEXT = 0xFF404040;
+    private static final int COLOR_DIM = 0xFF666666;
+    private static final int COLOR_CYAN = 0xFF007F8F;
+    private static final int COLOR_GREEN = 0xFF2E7D32;
+    private static final int COLOR_ORANGE = 0xFF9A5A00;
+    private static final ResourceLocation MEKANISM_BUTTON_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath("mekanism", "gui/button.png");
 
     private final SuperFusionCard fusionCard;
+    private Button fusionModeButton;
+    private Button moduleModeButton;
+    private Button targetModeButton;
 
     public SuperFusionCardScreen(ItemStack cardStack) {
         super(Component.translatable("gui.mekanism_card.super_fusion.title"));
@@ -51,218 +53,207 @@ public class SuperFusionCardScreen extends Screen {
 
     private ItemStack getCardStack() {
         Player player = Minecraft.getInstance().player;
-        if (player == null) return ItemStack.EMPTY;
+        if (player == null) {
+            return ItemStack.EMPTY;
+        }
         ItemStack mainHand = player.getMainHandItem();
-        if (mainHand.getItem() instanceof SuperFusionCard) return mainHand;
-        return ItemStack.EMPTY;
+        return mainHand.getItem() instanceof SuperFusionCard ? mainHand : ItemStack.EMPTY;
     }
 
     @Override
     protected void init() {
         super.init();
-        int x = (this.width - PANEL_WIDTH) / 2 + 12;
-        int y = (this.height - PANEL_HEIGHT) / 2;
-        int btnW = 124;
-        int btnH = 20;
-        int gap = 6;
-        int row1Y = y + 132;
-        int row2Y = row1Y + btnH + gap;
-        int row3Y = row2Y + btnH + gap;
+        int x = (width - PANEL_WIDTH) / 2;
+        int y = (height - PANEL_HEIGHT) / 2;
+        int buttonX = x + 66;
+        int buttonWidth = 100;
+        int buttonHeight = 14;
 
-        // 第一行：切换融合模式 | 切换范围
-        addRenderableWidget(Button.builder(
-                        Component.translatable("gui.mekanism_card.super_fusion.button.cycle_fusion_mode"),
-                        b -> onCycleFusionMode())
-                .pos(x, row1Y).size(btnW, btnH).build());
-        addRenderableWidget(Button.builder(
-                        Component.translatable("gui.mekanism_card.super_fusion.button.toggle_area_mode"),
-                        b -> onToggleAreaMode())
-                .pos(x + btnW + gap, row1Y).size(btnW, btnH).build());
-
-        // 第二行：切换模块选区 | 切换安装/移除
-        addRenderableWidget(Button.builder(
-                        Component.translatable("gui.mekanism_card.super_fusion.button.toggle_selection"),
-                        b -> onToggleSelection())
-                .pos(x, row2Y).size(btnW, btnH).build());
-        addRenderableWidget(Button.builder(
-                        Component.translatable("gui.mekanism_card.super_fusion.button.toggle_module_mode"),
-                        b -> onToggleModuleMode())
-                .pos(x + btnW + gap, row2Y).size(btnW, btnH).build());
-
-        // 第三行：清除内存（居中）
-        addRenderableWidget(Button.builder(
-                        Component.translatable("gui.mekanism_card.super_fusion.button.clear_memory"),
-                        b -> onClearMemory())
-                .pos(x + btnW / 2 + gap / 2, row3Y).size(btnW, btnH).build());
+        fusionModeButton = addRenderableWidget(new MekanismStyleButton(buttonX, y + 34,
+                buttonWidth, buttonHeight, Component.empty(), button -> onCycleFusionMode()));
+        moduleModeButton = addRenderableWidget(new MekanismStyleButton(buttonX, y + 51,
+                buttonWidth, buttonHeight, Component.empty(), button -> onToggleModuleMode()));
+        targetModeButton = addRenderableWidget(new MekanismStyleButton(buttonX, y + 68,
+                buttonWidth, buttonHeight, Component.empty(), button -> onToggleTargetMode()));
     }
-
-    // ===== 按钮回调：客户端预测 + 发送网络包 =====
 
     private void onCycleFusionMode() {
         ItemStack stack = getCardStack();
-        if (stack.isEmpty()) return;
+        if (stack.isEmpty()) {
+            return;
+        }
         SuperFusionCard.FusionMode current = fusionCard.getFusionMode(stack);
         SuperFusionCard.FusionMode[] values = SuperFusionCard.FusionMode.values();
         SuperFusionCard.FusionMode next = values[(current.ordinal() + 1) % values.length];
         stack.set(ModDataComponents.FUSION_MODE.get(), next.ordinal());
+        if (next == SuperFusionCard.FusionMode.MEMORY_COPY) {
+            fusionCard.setFuzzyMode(stack, false);
+        }
         PacketDistributor.sendToServer(FusionActionPayload.cycleMode());
-    }
-
-    private void onToggleAreaMode() {
-        ItemStack stack = getCardStack();
-        if (stack.isEmpty()) return;
-        boolean current = stack.getOrDefault(ModDataComponents.AREA_UPGRADE_MODE.get(), false);
-        stack.set(ModDataComponents.AREA_UPGRADE_MODE.get(), !current);
-        PacketDistributor.sendToServer(new ToggleModePayload());
-    }
-
-    private void onToggleSelection() {
-        if (getCardStack().isEmpty()) return;
-        PacketDistributor.sendToServer(FusionActionPayload.toggleSelection());
     }
 
     private void onToggleModuleMode() {
         ItemStack stack = getCardStack();
-        if (stack.isEmpty()) return;
-        if (fusionCard.getFusionMode(stack) == SuperFusionCard.FusionMode.MODULE_UPGRADE) {
-            Player player = Minecraft.getInstance().player;
-            if (player != null) {
-                MassUpgradeConfigurator configurator = (MassUpgradeConfigurator) MekanismCard.MASS_UPGRADE_CONFIGURATOR.get();
-                configurator.toggleMode(player);
-            }
+        if (stack.isEmpty() || fusionCard.getFusionMode(stack) != SuperFusionCard.FusionMode.MODULE_UPGRADE) {
+            return;
+        }
+        Player player = Minecraft.getInstance().player;
+        if (player != null) {
+            MassUpgradeConfigurator configurator =
+                    (MassUpgradeConfigurator) MekanismCard.MASS_UPGRADE_CONFIGURATOR.get();
+            MassUpgradeConfigurator.Mode targetMode = configurator.getCurrentMode(stack) == MassUpgradeConfigurator.Mode.INSTALL
+                    ? MassUpgradeConfigurator.Mode.CLEAR
+                    : MassUpgradeConfigurator.Mode.INSTALL;
+            configurator.setMode(stack, player, targetMode);
+            PacketDistributor.sendToServer(new ToolModePayload(targetMode == MassUpgradeConfigurator.Mode.CLEAR));
         }
     }
 
-    private void onClearMemory() {
-        if (getCardStack().isEmpty()) return;
-        PacketDistributor.sendToServer(FusionActionPayload.clearMemory());
+    private void onToggleTargetMode() {
+        ItemStack stack = getCardStack();
+        if (stack.isEmpty() || fusionCard.getFusionMode(stack) == SuperFusionCard.FusionMode.MEMORY_COPY) {
+            return;
+        }
+        boolean fuzzy = !fusionCard.isFuzzyMode(stack);
+        fusionCard.setFuzzyMode(stack, fuzzy);
+        PacketDistributor.sendToServer(new TargetModePayload(fuzzy));
     }
 
-    /** 覆盖 renderBackground，完全不绘制背景（不使用 1.21.1 默认的世界模糊效果，也不画遮罩）。 */
     @Override
     public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        // 不做任何绘制，让游戏世界直接显示在背景
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        // 不调用 renderBackground（已在覆盖的方法中禁用），直接渲染面板和 widget
-
         ItemStack stack = getCardStack();
         if (stack.isEmpty()) {
-            this.onClose();
+            onClose();
             return;
         }
 
-        int x = (this.width - PANEL_WIDTH) / 2;
-        int y = (this.height - PANEL_HEIGHT) / 2;
-        int w = PANEL_WIDTH;
-        int h = PANEL_HEIGHT;
+        int x = (width - PANEL_WIDTH) / 2;
+        int y = (height - PANEL_HEIGHT) / 2;
+        drawRaisedPanel(graphics, x, y, PANEL_WIDTH, PANEL_HEIGHT);
 
-        // LLMERA 风格：深蓝灰背景 + 亮蓝色 1px 边框
-        graphics.fill(x, y, x + w, y + h, COLOR_BG);
-        graphics.fill(x, y, x + w, y + 1, COLOR_BORDER);
-        graphics.fill(x, y + h - 1, x + w, y + h, COLOR_BORDER);
-        graphics.fill(x, y, x + 1, y + h, COLOR_BORDER);
-        graphics.fill(x + w - 1, y, x + w, y + h, COLOR_BORDER);
+        graphics.renderItem(stack, x + PADDING, y + 6);
+        graphics.drawString(font, title, x + 29, y + 10, COLOR_TEXT, false);
 
-        int tx = x + 12;
-        int ty = y;
-
-        // 标题
-        graphics.drawString(font, this.title, tx, ty + 8, COLOR_TEXT, false);
-
-        // 在线状态（能量 > 0 视为可用）
         IStrictEnergyHandler energyHandler = Capabilities.STRICT_ENERGY.getCapability(stack);
-        boolean hasEnergy = energyHandler != null && energyHandler.getEnergy(0) > 0;
-        String statusKey = hasEnergy
+        long energy = energyHandler == null ? 0 : energyHandler.getEnergy(0);
+        long maxEnergy = energyHandler == null ? 0 : energyHandler.getMaxEnergy(0);
+        boolean hasEnergy = energy > 0;
+        Component status = Component.translatable(hasEnergy
                 ? "gui.mekanism_card.super_fusion.status_ready"
-                : "gui.mekanism_card.super_fusion.status_no_energy";
-        int statusColor = hasEnergy ? COLOR_OK : COLOR_WARN;
-        graphics.drawString(font, Component.translatable(statusKey), tx, ty + 24, statusColor, false);
-
-        // ===== 状态信息 =====
-        int sy = ty + 48;
-        graphics.drawString(font,
-                Component.translatable("gui.mekanism_card.super_fusion.section_status"),
-                tx, sy, COLOR_LABEL, false);
-        sy += 16;
-
-        // 融合模式
-        SuperFusionCard.FusionMode mode = fusionCard.getFusionMode(stack);
-        drawKV(graphics, tx, sy,
-                Component.translatable("gui.mekanism_card.super_fusion.fusion_mode_short"),
-                mode.getDisplayName(), modeColor(mode));
-        sy += 14;
-
-        // 范围模式
-        boolean areaMode = stack.getOrDefault(ModDataComponents.AREA_UPGRADE_MODE.get(), false);
-        Component rangeText = areaMode
-                ? Component.translatable("gui.mekanism_card.super_fusion.range_area")
-                : Component.translatable("gui.mekanism_card.super_fusion.range_single");
-        drawKV(graphics, tx, sy,
-                Component.translatable("gui.mekanism_card.super_fusion.range_mode_short"),
-                rangeText, COLOR_ACCENT);
-        sy += 14;
-
-        // 模块选区
-        boolean selectionMode = fusionCard.isModuleSelectionModeActive(stack);
-        Component selectionText = selectionMode
-                ? Component.translatable("gui.mekanism_card.super_fusion.selection_on")
-                : Component.translatable("gui.mekanism_card.super_fusion.selection_off");
-        drawKV(graphics, tx, sy,
-                Component.translatable("gui.mekanism_card.super_fusion.selection_short"),
-                selectionText, selectionMode ? COLOR_OK : COLOR_DIM);
-        sy += 14;
-
-        // 模块安装/移除模式
-        MassUpgradeConfigurator.Mode moduleMode = fusionCard.getModuleMode();
-        drawKV(graphics, tx, sy,
-                Component.translatable("gui.mekanism_card.super_fusion.module_mode_short"),
-                moduleMode.getDisplayName(), COLOR_TEXT);
-        sy += 14;
-
-        // 能量
-        if (energyHandler != null) {
-            long energy = energyHandler.getEnergy(0);
-            long maxEnergy = energyHandler.getMaxEnergy(0);
-            drawKV(graphics, tx, sy,
-                    Component.translatable("gui.mekanism_card.super_fusion.energy_short"),
-                    Component.literal(energy + " / " + maxEnergy + " FE"),
-                    energy > 0 ? COLOR_WARN : COLOR_DIM);
+                : "gui.mekanism_card.super_fusion.status_no_energy");
+        int statusColor = hasEnergy ? COLOR_GREEN : COLOR_ORANGE;
+        int statusX = x + PANEL_WIDTH - PADDING - font.width(status);
+        graphics.fill(x + PANEL_WIDTH - PADDING - 4, y + 12,
+                x + PANEL_WIDTH - PADDING, y + 16, statusColor);
+        if (x + 29 + font.width(title) + 8 < statusX) {
+            graphics.drawString(font, status, statusX - 7, y + 10, statusColor, false);
         }
 
-        // ===== 操作分组标题 =====
-        int ay = ty + 120;
-        graphics.drawString(font,
-                Component.translatable("gui.mekanism_card.super_fusion.section_actions"),
-                tx, ay, COLOR_LABEL, false);
+        drawRecessedPanel(graphics, x + PADDING, y + 31, PANEL_WIDTH - PADDING * 2, 54);
+        SuperFusionCard.FusionMode fusionMode = fusionCard.getFusionMode(stack);
+        MassUpgradeConfigurator.Mode moduleMode = fusionCard.getModuleMode(stack);
+        fusionModeButton.setMessage(compactFusionModeName(fusionMode));
+        moduleModeButton.setMessage(moduleMode.getDisplayName());
+        targetModeButton.setMessage(Component.translatable(fusionCard.isFuzzyMode(stack)
+                ? "mekanism_card.target_mode.fuzzy"
+                : "mekanism_card.target_mode.precise"));
+        moduleModeButton.active = fusionMode == SuperFusionCard.FusionMode.MODULE_UPGRADE;
+        targetModeButton.active = fusionMode != SuperFusionCard.FusionMode.MEMORY_COPY;
+        updateButtonTooltips(fusionMode, moduleMode, fusionCard.isFuzzyMode(stack));
 
-        // 底部提示
-        graphics.drawString(font,
-                Component.translatable("gui.mekanism_card.super_fusion.esc_to_close"),
-                tx, y + h - 14, COLOR_DIM, false);
+        drawStatusLabel(graphics, x + 13, y + 37,
+                Component.translatable("gui.mekanism_card.super_fusion.fusion_mode_short"));
+        drawStatusLabel(graphics, x + 13, y + 54,
+                Component.translatable("gui.mekanism_card.super_fusion.module_mode_short"));
+        drawStatusLabel(graphics, x + 13, y + 71,
+                Component.translatable("gui.mekanism_card.super_fusion.target_mode_short"));
+
+        Component energyLabel = Component.translatable("gui.mekanism_card.super_fusion.energy_short");
+        Component energyValue = Component.literal(energy + " / " + maxEnergy + " FE");
+        graphics.drawString(font, energyLabel, x + PADDING, y + 90, COLOR_TEXT, false);
+        graphics.drawString(font, energyValue,
+                x + PANEL_WIDTH - PADDING - font.width(energyValue), y + 90, COLOR_DIM, false);
+        drawRecessedPanel(graphics, x + PADDING, y + 101, PANEL_WIDTH - PADDING * 2, 7);
+        int barWidth = PANEL_WIDTH - PADDING * 2 - 4;
+        int filledWidth = maxEnergy <= 0 ? 0
+                : (int) Math.round(barWidth * Math.min(1.0, (double) energy / maxEnergy));
+        graphics.fill(x + PADDING + 2, y + 103,
+                x + PADDING + 2 + filledWidth, y + 106, hasEnergy ? COLOR_CYAN : COLOR_DIM);
 
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 
-    /** 绘制 键: 值 格式的状态行。键用浅蓝色，值用指定颜色。 */
-    private void drawKV(GuiGraphics g, int x, int y, Component key, Component value, int valueColor) {
-        g.drawString(font, key, x, y, COLOR_LABEL, false);
-        int keyW = font.width(key);
-        g.drawString(font, ": ", x + keyW, y, COLOR_DIM, false);
-        int colonW = font.width(": ");
-        // 给值上色：用 Component 的 style 不太方便（颜色是 ARGB int），直接 drawString 带 color
-        g.drawString(font, value, x + keyW + colonW, y, valueColor, false);
+    private void drawStatusLabel(GuiGraphics graphics, int x, int y, Component label) {
+        graphics.drawString(font, label, x, y, COLOR_TEXT, false);
     }
 
-    /** 融合模式对应的显示颜色。 */
-    private int modeColor(SuperFusionCard.FusionMode mode) {
-        return switch (mode) {
-            case TIER_INSTALL -> COLOR_ACCENT;
-            case MODULE_UPGRADE -> COLOR_OK;
-            case MEMORY_COPY -> 0xB58CFF;
+    private Component compactFusionModeName(SuperFusionCard.FusionMode mode) {
+        return Component.translatable(switch (mode) {
+            case TIER_INSTALL -> "gui.mekanism_card.super_fusion.mode_compact.tier";
+            case MODULE_UPGRADE -> "gui.mekanism_card.super_fusion.mode_compact.module";
+            case MEMORY_COPY -> "gui.mekanism_card.super_fusion.mode_compact.memory";
+            case FULL_PASTE -> "gui.mekanism_card.super_fusion.mode_compact.full";
+        });
+    }
+
+    private void updateButtonTooltips(SuperFusionCard.FusionMode fusionMode,
+                                      MassUpgradeConfigurator.Mode moduleMode, boolean fuzzy) {
+        String fusionTooltip = switch (fusionMode) {
+            case TIER_INSTALL -> "gui.mekanism_card.super_fusion.tooltip.mode.tier";
+            case MODULE_UPGRADE -> "gui.mekanism_card.super_fusion.tooltip.mode.module";
+            case MEMORY_COPY -> "gui.mekanism_card.super_fusion.tooltip.mode.memory";
+            case FULL_PASTE -> "gui.mekanism_card.super_fusion.tooltip.mode.full";
         };
+        fusionModeButton.setTooltip(Tooltip.create(Component.translatable(fusionTooltip)));
+        moduleModeButton.setTooltip(Tooltip.create(Component.translatable(moduleMode == MassUpgradeConfigurator.Mode.INSTALL
+                ? "gui.mekanism_card.super_fusion.tooltip.module.install"
+                : "gui.mekanism_card.super_fusion.tooltip.module.clear")));
+        String targetTooltip = fusionMode == SuperFusionCard.FusionMode.MEMORY_COPY
+                ? "gui.mekanism_card.super_fusion.tooltip.target.memory"
+                : fuzzy
+                ? "gui.mekanism_card.super_fusion.tooltip.target.fuzzy"
+                : "gui.mekanism_card.super_fusion.tooltip.target.precise";
+        targetModeButton.setTooltip(Tooltip.create(Component.translatable(targetTooltip)));
+    }
+
+    private void drawRaisedPanel(GuiGraphics graphics, int x, int y, int width, int height) {
+        graphics.fill(x, y, x + width, y + height, COLOR_DEEP_SHADOW);
+        graphics.fill(x, y, x + width - 2, y + height - 2, COLOR_PANEL);
+        graphics.fill(x, y, x + width - 2, y + 2, COLOR_HIGHLIGHT);
+        graphics.fill(x, y, x + 2, y + height - 2, COLOR_HIGHLIGHT);
+        graphics.fill(x + 2, y + 2, x + width - 2, y + 3, COLOR_MID_HIGHLIGHT);
+        graphics.fill(x + 2, y + 2, x + 3, y + height - 2, COLOR_MID_HIGHLIGHT);
+        graphics.fill(x + 2, y + height - 4, x + width - 2, y + height - 2, COLOR_SHADOW);
+        graphics.fill(x + width - 4, y + 2, x + width - 2, y + height - 2, COLOR_SHADOW);
+    }
+
+    private void drawRecessedPanel(GuiGraphics graphics, int x, int y, int width, int height) {
+        graphics.fill(x, y, x + width, y + height, COLOR_HIGHLIGHT);
+        graphics.fill(x, y, x + width - 1, y + height - 1, COLOR_SHADOW);
+        graphics.fill(x + 2, y + 2, x + width - 1, y + height - 1, COLOR_RECESSED);
+    }
+
+    private static class MekanismStyleButton extends Button {
+
+        private MekanismStyleButton(int x, int y, int width, int height, Component message, OnPress onPress) {
+            super(x, y, width, height, message, onPress, DEFAULT_NARRATION);
+        }
+
+        @Override
+        protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+            RenderSystem.enableDepthTest();
+            int textureY = !active ? 0 : isHoveredOrFocused() ? 40 : 20;
+            GuiUtils.blitNineSlicedSized(graphics, MEKANISM_BUTTON_TEXTURE,
+                    getX(), getY(), getWidth(), getHeight(),
+                    20, 4, 200, 20, 0, textureY, 200, 60);
+            renderString(graphics, Minecraft.getInstance().font, active ? 0xFFFFFFFF : 0xFFA0A0A0);
+        }
     }
 
     @Override

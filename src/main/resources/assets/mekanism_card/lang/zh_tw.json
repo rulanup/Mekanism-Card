@@ -4,7 +4,7 @@
   "itemGroup.mekanism_card": "Mekanism 升級卡",
 
   "mekanism_card.mode.install": "安裝模式",
-  "mekanism_card.mode.remove": "移除模式",
+  "mekanism_card.mode.clear": "清除模式",
 
   "mekanism_card.memory_card.mode.copy": "複製模式",
   "mekanism_card.memory_card.mode.paste": "貼上模式",
@@ -41,7 +41,7 @@
   "message.mekanism_card.selection_incomplete": "選區未完成，請先蹲下右鍵設置兩個角點",
   "tooltip.mekanism_card.current_upgrade": "當前升級: %s",
   "tooltip.mekanism_card.no_upgrade": "當前升級: 未選擇",
-  "tooltip.mekanism_card.air_click_switch_mode": "空氣右鍵：切換安裝/移除模式",
+  "tooltip.mekanism_card.air_click_switch_mode": "空氣右鍵：切換安裝/清除模式",
   "tooltip.mekanism_card.sneak_air_click_switch_selection": "潛行+空氣右鍵：切換選區模式",
   "tooltip.mekanism_card.current_mode": "當前模式: %s | %s",
   "tooltip.mekanism_card.mode.radius": "半徑模式",

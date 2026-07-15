@@ -6,7 +6,7 @@ categories:
 navigation:
   title: Ultimate Tier Installer
   icon: mekanism_card:ultimate_tier_installer
-  parent: tools.md
+  parent: index.md
   position: 3
 ---
 
@@ -57,9 +57,11 @@ When upgrading, items are consumed in this order:
 
 This allows seamless upgrades across all your storage systems.
 
-## Area Upgrade Mode
+## Batch Upgrading
 
-Press **Ctrl + right-click** to toggle Area Mode. In this mode, right-clicking a machine upgrades **all connected machines** that are touching each other to Ultimate tier at once.
+- Right-click a machine: upgrade that machine.
+- Hold the selection key (Left Ctrl by default) and left-click two corners: upgrade compatible machines in that cuboid.
+- Hold the FTB Ultimine key while right-clicking: upgrade all blocks in its current selection.
 
 Energy and upgrade items are consumed for each upgraded machine.
 

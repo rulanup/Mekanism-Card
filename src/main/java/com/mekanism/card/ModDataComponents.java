@@ -25,4 +25,14 @@ public class ModDataComponents {
             DATA_COMPONENT_TYPES.register("fusion_mode", () -> DataComponentType.<Integer>builder()
                     .persistent(Codec.INT)
                     .build());
+
+    public static final Supplier<DataComponentType<Boolean>> MODULE_CLEAR_MODE =
+            DATA_COMPONENT_TYPES.register("module_clear_mode", () -> DataComponentType.<Boolean>builder()
+                    .persistent(Codec.BOOL)
+                    .build());
+
+    public static final Supplier<DataComponentType<Boolean>> FUZZY_TARGET_MODE =
+            DATA_COMPONENT_TYPES.register("fuzzy_target_mode", () -> DataComponentType.<Boolean>builder()
+                    .persistent(Codec.BOOL)
+                    .build());
 }

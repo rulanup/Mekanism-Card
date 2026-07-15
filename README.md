@@ -15,23 +15,22 @@ Batch operation tools for Mekanism mod - save hours of tedious clicking when bui
 
 **All-in-one tool: tier upgrades, module installation, and config copy/paste**
 
-- **Three Fusion Modes**: Cycle between Tier Install, Module Upgrade, and Memory Copy/Paste
-- **Area/Single Toggle**: Switch between affecting a single machine or all connected machines
-- **Selection Mode**: Define a custom cuboid area for batch operations
-- **Middle-Click Quick Install**: Middle-click a machine to automatically install all supported upgrade modules (each to max capacity)
-  - In Radius Mode: batch installs on all adjacent connected machines
-  - In Selection Mode: batch installs on all machines within the selection area
+- **Four Fusion Modes**: Cycle between Tier Install, Module Upgrade, Memory Copy/Paste, and Full Paste
+- **Quick Batch Selection**: Hold the selection key and left-click two corners to immediately process a cuboid area
+- **Middle-Click Quick Install**: Middle-click a machine to install all supported upgrades; hold the FTB Ultimine key for a batch
 - **AE2 & QIO Integration**: Pulls tier installers and upgrade modules from bound networks
 - **Energy System**: Stores up to 200,000 FE; each tier upgrade consumes 1,000 FE
 
 **Controls**:
-- Ctrl + Right-click air: Cycle fusion mode
-- Hold G: Open the radial wheel and point at a fusion mode; release G to select it
-- Shift + Right-click air: Toggle module selection mode
-- Ctrl + Shift + Right-click air: Toggle area/single mode
-- Alt + Right-click air: Clear saved memory data
-- Right-click machine: Execute current fusion mode (blocks machine UI)
-- Middle-click machine: Install all supported upgrades (respects area/selection mode)
+- Left-click air: Open the configuration screen
+- Shift + left-click air: Cycle fusion mode
+- Hold the selection key (Left Ctrl by default) and left-click two corners: Run a batch module operation
+- Shift + right-click machine: Copy its configuration into the card
+- Shift + right-click air: Clear the saved configuration
+- Right-click machine: Execute the current fusion mode; Memory mode pastes the copied configuration
+- Middle-click machine: Install all supported upgrades; hold the FTB Ultimine key to process its selection
+- Configuration screen targeting: Tier/Module batches use the copied machine type in Precise Mode or mixed compatible machines in Fuzzy Mode; Memory mode is always precise
+- Full Paste: Precise Mode applies copied tier, upgrades, and full machine configuration to the same machine family; Fuzzy Mode applies copied tier and compatible upgrades across machine types
 
 ### Ultimate Tier Installer
 
@@ -43,38 +42,41 @@ Batch operation tools for Mekanism mod - save hours of tedious clicking when bui
 - **AE2 Integration**: Extract upgrade items from a bound AE2 network via Wireless Access Point
 - **QIO Integration**: Extract upgrade items from a bound QIO frequency
 - **Smart Consumption**: Items consumed in priority order: Inventory > AE2 > QIO
-- **Area Upgrade Mode**: Press Ctrl + Right-click to toggle area mode, which upgrades all connected machines (blocks touching each other) at once
+- **Batch Upgrading**: Hold the selection key and left-click two corners, or hold the FTB Ultimine key while right-clicking
 
 ### Mass Upgrade Configurator
 
-**Bulk install/remove upgrade modules in one click**
+**Bulk install or clear upgrade modules in one click**
 
-- **Bulk Install**: Automatically install upgrade modules from your inventory to all nearby machines of the same type
-- **Bulk Remove**: Remove all upgrades from nearby machines and collect them back to your inventory
+- **Profile Sync**: Shift + right-click saves a machine's upgrade types and levels; right-click synchronizes targets to that profile
+- **Surplus Recovery**: Upgrades above the saved levels are removed and returned to the player
+- **Clear Mode**: Remove all installed upgrade types from target machines and return them to your inventory
 - **Middle-Click Quick Install**: Middle-click a machine to automatically install all supported upgrade modules (each to max capacity)
-  - In Radius Mode: batch installs on all adjacent connected machines
-  - In Selection Mode: batch installs on all machines within the selection area
-- **Smart Detection**: Automatically detects upgrade type in your inventory (Speed, Energy, Muffling, etc.)
+- **Middle-Click Batch Install**: Hold the FTB Ultimine key while middle-clicking to process its selection
+- **FTB Ultimine Integration**: Hold the Ultimine key while executing to process its selected block set
+- **Jade Integration**: While holding a configuration card, Jade shows every upgrade installed in the targeted Mekanism machine
 - **Visual Feedback**: Colored outlines in-game to indicate current status
   - Green = Install mode
-  - Red = Remove mode
+  - Red = Clear mode
   - Grey = No upgrade available
 
-**Two Operation Modes**:
-- **Radius Mode**: Sneak + right-click a machine to affect all adjacent connected machines
-- **Selection Mode**: Sneak + right-click to set two corner points, defining a cuboid area for batch operations
+**Batch Operations**:
+- **Quick Selection**: Hold the selection key and left-click two corners; the second click immediately processes the cuboid area
+- **FTB Ultimine**: Hold its key while right-clicking to process the selected blocks
 
 ### Memory Card
 
 **Copy & Paste Machine Configurations**
 
-- **Copy Config**: Right-click a Mekanism machine to copy its configuration (upgrades, settings, etc.)
+- **Copy Config**: Shift + right-click a Mekanism machine to copy its configuration (upgrades, settings, etc.)
 - **Paste Config**: Right-click a machine of the same type to apply the copied configuration
-- **Batch Paste**: Automatically applies to all connected machines of the same type
+- **Batch Paste**: Hold the selection key and left-click two corners to paste within that cuboid
+- **FTB Ultimine Paste**: Hold the Ultimine key while right-clicking to paste to its current selection
 - **Creative Mode**: Pasting in creative mode doesn't consume upgrade materials
 
 **Controls**:
-- Right-click machine: Copy (if no data) or Paste (if has data)
+- Shift + right-click machine: Copy configuration and upgrades
+- Right-click machine: Paste configuration and upgrades
 - Sneak + Right-click air: Clear stored configuration
 
 ### Guide Book
@@ -160,10 +162,9 @@ Book + Mass Upgrade Configurator
 2. **Charge it**: Place it in a Mekanism Energy Cube or compatible charger (needs 1,000 FE per tier upgrade)
 3. **(Optional) Bind AE2 network**: Place the item in a Wireless Access Point's link slot
 4. **(Optional) Bind QIO frequency**: Sneak + Right-click any QIO block with a frequency selected
-5. **Switch modes**: Hold G, point at Tier Install, Module Upgrade, or Memory Copy/Paste, then release G
+5. **Switch modes**: Left-click air to open the configuration screen, or Shift + left-click air to cycle modes
 6. **Quick install all upgrades**: Middle-click a machine to install all supported upgrade modules at once
-7. **Area mode**: Ctrl + Shift + Right-click air to toggle area/single mode for batch operations
-8. **Clear memory**: Alt + Right-click air to clear saved memory data
+7. **Copy and paste memory**: Shift + right-click a machine to copy; right-click in Memory mode to paste
 
 ### Ultimate Tier Installer
 
@@ -172,24 +173,23 @@ Book + Mass Upgrade Configurator
 3. **(Optional) Bind AE2 network**: Place the item in a Wireless Access Point's link slot
 4. **(Optional) Bind QIO frequency**: Sneak + Right-click any QIO block with a frequency selected
 5. **Execute upgrade**: Right-click a machine to upgrade it to Ultimate tier
-6. **Area mode**: Press Ctrl + Right-click to toggle area mode, then right-click a machine to upgrade all connected machines
+6. **Batch upgrade**: Hold the selection key and left-click two corners, or hold the FTB Ultimine key while right-clicking
 
 ### Mass Upgrade Configurator
 
 1. **Craft the tool**: Use the recipe above to craft the Mass Upgrade Configurator
 2. **Prepare upgrades**: Ensure you have upgrade modules in your inventory or bound network
-3. **Select mode**:
-   - Right-click air: Toggle install/remove mode
-   - Sneak + right-click air: Toggle radius/selection mode
-4. **Execute operation**:
-   - Radius mode: Sneak + right-click a machine
-   - Selection mode: Set two corner points, then right-click a machine
-5. **Quick install all upgrades**: Middle-click a machine to install all supported upgrades at once (respects area/selection mode)
+3. **Save profile**: Shift + right-click the source machine
+4. **Select mode**: Shift + left-click air to toggle install/clear mode
+5. **Execute operation**:
+   - Single machine: Right-click a machine
+   - Quick selection: Hold the selection key and left-click two corners
+6. **Quick install all upgrades**: Middle-click a machine to install all supported upgrades at once
 
 ### Memory Card
 
 1. **Craft the tool**: Use the recipe above to craft the Memory Card
-2. **Copy configuration**: Right-click a configured Mekanism machine
+2. **Copy configuration**: Shift + right-click a configured Mekanism machine
 3. **Paste configuration**: Right-click another machine of the same type
 4. **Clear configuration**: Sneak + Right-click air
 

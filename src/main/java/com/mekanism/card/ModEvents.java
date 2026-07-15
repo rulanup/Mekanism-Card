@@ -16,6 +16,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -31,42 +32,69 @@ public class ModEvents {
         Player player = event.getEntity();
         ItemStack stack = event.getItemStack();
 
-        if (stack.getItem() instanceof IFrequencyItem freqItem && freqItem.getFrequencyType() == FrequencyType.QIO && handleQIOBinding(event, player, stack)) {
-            return;
-        }
-
         if (stack.getItem() instanceof MemoryCard) {
-            if (event.getLevel().isClientSide) {
+            BlockPos pos = event.getPos();
+            if (player.isShiftKeyDown()
+                    && event.getLevel().getBlockEntity(pos) instanceof IQIOFrequencyHolder
+                    && handleQIOBinding(event, player, stack)) {
                 return;
             }
-
-            BlockPos pos = event.getPos();
             boolean isTargetingMachine = event.getLevel().getBlockEntity(pos) instanceof IConfigCardAccess;
-
-            if (player.isShiftKeyDown()) {
-                MemoryCard.handleClearStatic(player, stack);
-            } else if (isTargetingMachine) {
-                if (MemoryCard.hasData(stack)) {
-                    MemoryCard.handlePasteStatic(event.getLevel(), pos, player, stack);
-                } else {
-                    MemoryCard.handleCopyStatic(event.getLevel(), pos, player, stack);
+            if (isTargetingMachine) {
+                if (!event.getLevel().isClientSide) {
+                    if (player.isShiftKeyDown()) {
+                        MemoryCard.handleCopyStatic(event.getLevel(), pos, player, stack);
+                    } else {
+                        handleMemoryPaste(event, player, stack);
+                    }
                 }
+                event.setCancellationResult(InteractionResult.SUCCESS);
+                event.setCanceled(true);
             }
-            event.setCanceled(true);
             return;
         }
 
         if (stack.getItem() instanceof SuperFusionCard fusionCard) {
+            if (player.isShiftKeyDown()) {
+                if (event.getLevel().getBlockEntity(event.getPos()) instanceof IQIOFrequencyHolder
+                        && handleQIOBinding(event, player, stack)) {
+                    return;
+                }
+                if (event.getLevel().getBlockEntity(event.getPos()) instanceof IConfigCardAccess) {
+                    if (!event.getLevel().isClientSide) {
+                        fusionCard.handleMemoryCopy(event.getLevel(), event.getPos(), player, stack);
+                    }
+                    event.setCancellationResult(InteractionResult.SUCCESS);
+                    event.setCanceled(true);
+                    return;
+                }
+                if (!event.getLevel().isClientSide) {
+                    fusionCard.handleMemoryCopy(event.getLevel(), event.getPos(), player, stack);
+                }
+                event.setCancellationResult(InteractionResult.SUCCESS);
+                event.setCanceled(true);
+                return;
+            }
             if (event.getLevel().isClientSide) {
+                event.setCancellationResult(InteractionResult.SUCCESS);
+                event.setCanceled(true);
                 return;
             }
 
             switch (fusionCard.getFusionMode(stack)) {
                 case TIER_INSTALL -> fusionCard.useOn(new UseOnContext(player, event.getHand(), event.getHitVec()));
-                case MODULE_UPGRADE -> fusionCard.handleModuleOperation(event.getLevel(), event.getPos(), player, stack);
-                case MEMORY_COPY -> fusionCard.handleMemoryOperation(event.getLevel(), event.getPos(), player, stack);
+                case MODULE_UPGRADE -> fusionCard.handleModuleOperation(event.getLevel(), event.getPos(),
+                        event.getFace() == null ? net.minecraft.core.Direction.UP : event.getFace(), player, stack);
+                case MEMORY_COPY -> fusionCard.handleMemoryOperation(event.getLevel(), event.getPos(),
+                        event.getFace() == null ? net.minecraft.core.Direction.UP : event.getFace(), player, stack);
+                case FULL_PASTE -> fusionCard.handleFullOperation(event.getLevel(), event.getPos(),
+                        event.getFace() == null ? net.minecraft.core.Direction.UP : event.getFace(), player, stack);
             }
             event.setCanceled(true);
+            return;
+        }
+
+        if (stack.getItem() instanceof IFrequencyItem freqItem && freqItem.getFrequencyType() == FrequencyType.QIO && handleQIOBinding(event, player, stack)) {
             return;
         }
 
@@ -74,32 +102,45 @@ public class ModEvents {
             return;
         }
 
-        if (event.getLevel().isClientSide) {
+        if (player.isShiftKeyDown()
+                && event.getLevel().getBlockEntity(event.getPos()) instanceof IConfigCardAccess) {
+            if (!event.getLevel().isClientSide) {
+                MemoryCard.handleCopyStatic(event.getLevel(), event.getPos(), player, stack);
+            }
+            event.setCancellationResult(InteractionResult.SUCCESS);
+            event.setCanceled(true);
             return;
         }
 
-        displayModeInfo(player, configurator, stack);
+        if (event.getLevel().isClientSide) {
+            event.setCancellationResult(InteractionResult.SUCCESS);
+            event.setCanceled(true);
+            return;
+        }
 
-        boolean selectionMode = configurator.isSelectionModeActive(stack);
-
-        if (selectionMode) {
-            configurator.checkAndClearSelectionIfTooFar(event.getLevel(), player, stack);
-
-            if (player.isShiftKeyDown()) {
-                configurator.handleSelectionModeSetPoint(event.getLevel(), event.getPos(), player, stack);
-                event.setCanceled(true);
-            } else {
-                configurator.handleSelectionModeExecute(event.getLevel(), event.getPos(), player, stack);
-                event.setCanceled(true);
-            }
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
+                && com.mekanism.card.compat.UltimineCompat.isPressed(serverPlayer)) {
+            configurator.handleWithUltimine(event.getLevel(), event.getPos(),
+                    event.getFace() == null ? net.minecraft.core.Direction.UP : event.getFace(), player, stack);
         } else {
-            if (player.isShiftKeyDown()) {
-                configurator.handleRadiusMode(event.getLevel(), event.getPos(), player, stack);
-                event.setCanceled(true);
-            } else {
-                event.setCanceled(true);
+            configurator.handleSingleMode(event.getLevel(), event.getPos(), player, stack);
+        }
+        event.setCancellationResult(InteractionResult.SUCCESS);
+        event.setCanceled(true);
+    }
+
+    private static void handleMemoryPaste(PlayerInteractEvent.RightClickBlock event, Player player, ItemStack stack) {
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
+                && com.mekanism.card.compat.UltimineCompat.isPressed(serverPlayer)) {
+            var positions = com.mekanism.card.compat.UltimineCompat.getCachedPositions(
+                    serverPlayer, event.getPos(),
+                    event.getFace() == null ? net.minecraft.core.Direction.UP : event.getFace());
+            if (positions.size() > 1) {
+                MemoryCard.handleBatchPasteStatic(event.getLevel(), positions, player, stack);
+                return;
             }
         }
+        MemoryCard.handlePasteStatic(event.getLevel(), event.getPos(), player, stack);
     }
 
     private static boolean handleQIOBinding(PlayerInteractEvent.RightClickBlock event, Player player, ItemStack stack) {
@@ -112,10 +153,11 @@ public class ModEvents {
             return false;
         }
 
+        event.setCancellationResult(InteractionResult.SUCCESS);
+        event.setCanceled(true);
         if (event.getLevel().isClientSide) {
             return true;
         }
-        event.setCanceled(true);
 
         QIOFrequency freq = holder.getQIOFrequency();
         if (freq == null || !freq.isValid()) {
@@ -143,19 +185,10 @@ public class ModEvents {
             }
 
             if (player.isShiftKeyDown()) {
-                MemoryCard.handleClearStatic(player, stack);
+                MemoryCard.handleClearMachineDataStatic(player, stack);
                 event.setCanceled(true);
             }
         }
-    }
-
-    private static void displayModeInfo(Player player, MassUpgradeConfigurator configurator, ItemStack stack) {
-        boolean selectionMode = configurator.isSelectionModeActive(stack);
-        String modeKey = selectionMode ? "tooltip.mekanism_card.mode.selection" : "tooltip.mekanism_card.mode.radius";
-        player.displayClientMessage(Component.translatable("tooltip.mekanism_card.current_mode",
-                        Component.translatable(modeKey),
-                        configurator.getCurrentMode().getDisplayName())
-                .withStyle(selectionMode ? ChatFormatting.AQUA : ChatFormatting.GOLD), true);
     }
 
 }

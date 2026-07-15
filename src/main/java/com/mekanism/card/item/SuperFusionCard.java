@@ -2,13 +2,10 @@ package com.mekanism.card.item;
 
 import com.mekanism.card.MekanismCard;
 import com.mekanism.card.ModDataComponents;
-import mekanism.api.Upgrade;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -16,6 +13,7 @@ import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
+import java.util.Collection;
 import java.util.List;
 
 public class SuperFusionCard extends UltimateTierInstaller {
@@ -23,7 +21,8 @@ public class SuperFusionCard extends UltimateTierInstaller {
     public enum FusionMode {
         TIER_INSTALL("tooltip.mekanism_card.super_fusion.mode.tier", ChatFormatting.GREEN),
         MODULE_UPGRADE("tooltip.mekanism_card.super_fusion.mode.module", ChatFormatting.GOLD),
-        MEMORY_COPY("tooltip.mekanism_card.super_fusion.mode.memory", ChatFormatting.AQUA);
+        MEMORY_COPY("tooltip.mekanism_card.super_fusion.mode.memory", ChatFormatting.AQUA),
+        FULL_PASTE("tooltip.mekanism_card.super_fusion.mode.full", ChatFormatting.LIGHT_PURPLE);
 
         private final String translationKey;
         private final ChatFormatting color;
@@ -55,15 +54,6 @@ public class SuperFusionCard extends UltimateTierInstaller {
         }
     }
 
-    @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-        if (!level.isClientSide && getFusionMode(stack) == FusionMode.MODULE_UPGRADE && !player.isShiftKeyDown()) {
-            moduleConfigurator().toggleMode(player);
-        }
-        return InteractionResultHolder.success(stack);
-    }
-
     public FusionMode getFusionMode(ItemStack stack) {
         return FusionMode.byId(stack.getOrDefault(ModDataComponents.FUSION_MODE.get(), FusionMode.TIER_INSTALL.ordinal()));
     }
@@ -74,91 +64,109 @@ public class SuperFusionCard extends UltimateTierInstaller {
 
     public void setFusionMode(ItemStack stack, Player player, FusionMode mode) {
         stack.set(ModDataComponents.FUSION_MODE.get(), mode.ordinal());
+        if (mode == FusionMode.MEMORY_COPY) {
+            setFuzzyMode(stack, false);
+        }
         player.displayClientMessage(Component.translatable("message.mekanism_card.super_fusion.mode_switched", mode.getDisplayName())
                 .withStyle(mode.getColor()), true);
-    }
-
-    public void toggleModuleSelectionMode(ItemStack stack, Player player) {
-        moduleConfigurator().toggleSelectionMode(stack, player);
     }
 
     public void clearMemoryData(ItemStack stack, Player player) {
         MemoryCard.handleClearMachineDataStatic(player, stack);
     }
 
-    public void handleModuleOperation(Level level, BlockPos pos, Player player, ItemStack stack) {
-        MassUpgradeConfigurator configurator = moduleConfigurator();
-        if (configurator.isSelectionModeActive(stack)) {
-            configurator.checkAndClearSelectionIfTooFar(level, player, stack);
-            if (player.isShiftKeyDown()) {
-                configurator.handleSelectionModeSetPoint(level, pos, player, stack);
-            } else {
-                configurator.handleSelectionModeExecute(level, pos, player, stack);
+    public boolean isFuzzyMode(ItemStack stack) {
+        return getFusionMode(stack) != FusionMode.MEMORY_COPY
+                && stack.getOrDefault(ModDataComponents.FUZZY_TARGET_MODE.get(), false);
+    }
+
+    public void setFuzzyMode(ItemStack stack, boolean fuzzy) {
+        stack.set(ModDataComponents.FUZZY_TARGET_MODE.get(), fuzzy);
+    }
+
+    public void handleModuleOperation(Level level, BlockPos pos, Direction face, Player player, ItemStack stack) {
+        Collection<BlockPos> positions = List.of(pos);
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
+                && com.mekanism.card.compat.UltimineCompat.isPressed(serverPlayer)) {
+            Collection<BlockPos> ultiminePositions = com.mekanism.card.compat.UltimineCompat.getCachedPositions(
+                    serverPlayer, pos, face);
+            if (ultiminePositions.size() > 1) {
+                positions = ultiminePositions;
             }
-        } else if (isAreaMode(stack)) {
-            configurator.handleRadiusMode(level, pos, player, stack);
-        } else {
-            configurator.handleSingleMode(level, pos, player, stack);
         }
-    }
-
-    public boolean isModuleSelectionModeActive(ItemStack stack) {
-        return moduleConfigurator().isSelectionModeActive(stack);
-    }
-
-    public MassUpgradeConfigurator.Mode getModuleMode() {
-        return moduleConfigurator().getCurrentMode();
-    }
-
-    public void checkAndClearModuleSelectionIfTooFar(Level level, Player player, ItemStack stack) {
-        moduleConfigurator().checkAndClearSelectionIfTooFar(level, player, stack);
-    }
-
-    public void handleMemoryOperation(Level level, BlockPos pos, Player player, ItemStack stack) {
-        if (MemoryCard.hasData(stack)) {
-            MemoryCard.handlePasteStatic(level, pos, player, stack);
-        } else {
-            MemoryCard.handleCopyStatic(level, pos, player, stack);
+        if (!isFuzzyMode(stack)) {
+            var sourceBlock = MemoryCard.getStoredSourceBlock(stack);
+            if (sourceBlock == null) {
+                player.displayClientMessage(Component.translatable("message.mekanism_card.memory_card.no_data")
+                        .withStyle(ChatFormatting.RED), true);
+                return;
+            }
+            positions = positions.stream()
+                    .filter(targetPos -> level.getBlockState(targetPos).getBlock() == sourceBlock)
+                    .toList();
+            if (positions.isEmpty()) {
+                player.displayClientMessage(Component.translatable("message.mekanism_card.memory_card.type_mismatch")
+                        .withStyle(ChatFormatting.RED), true);
+                return;
+            }
         }
+        moduleConfigurator().handlePositions(level, positions, player, stack);
+    }
+
+    public MassUpgradeConfigurator.Mode getModuleMode(ItemStack stack) {
+        return moduleConfigurator().getCurrentMode(stack);
+    }
+
+    public void handleMemoryOperation(Level level, BlockPos pos, Direction face, Player player, ItemStack stack) {
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
+                && com.mekanism.card.compat.UltimineCompat.isPressed(serverPlayer)) {
+            var positions = com.mekanism.card.compat.UltimineCompat.getCachedPositions(serverPlayer, pos, face);
+            if (positions.size() > 1) {
+                MemoryCard.handleBatchPasteStatic(level, positions, player, stack);
+                return;
+            }
+        }
+        MemoryCard.handlePasteStatic(level, pos, player, stack);
+    }
+
+    public void handleFullOperation(Level level, BlockPos pos, Direction face, Player player, ItemStack stack) {
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
+                && com.mekanism.card.compat.UltimineCompat.isPressed(serverPlayer)) {
+            var positions = com.mekanism.card.compat.UltimineCompat.getCachedPositions(serverPlayer, pos, face);
+            if (positions.size() > 1) {
+                MemoryCard.handleBatchFullPasteStatic(level, positions, player, stack, this);
+                return;
+            }
+        }
+        MemoryCard.handleFullPasteStatic(level, pos, player, stack, this);
+    }
+
+    public void handleMemoryCopy(Level level, BlockPos pos, Player player, ItemStack stack) {
+        MemoryCard.handleCopyStatic(level, pos, player, stack);
     }
 
     public void handleMiddleClick(Level level, BlockPos pos, Player player, ItemStack stack) {
-        MassUpgradeConfigurator configurator = moduleConfigurator();
-        if (configurator.isSelectionModeActive(stack)) {
-            configurator.checkAndClearSelectionIfTooFar(level, player, stack);
-            configurator.handleMiddleClickSelection(level, pos, player, stack);
-        } else if (isAreaMode(stack)) {
-            configurator.handleMiddleClickRadius(level, pos, player, stack);
-        } else {
-            configurator.handleMiddleClick(level, pos, player, stack);
-        }
+        moduleConfigurator().handleMiddleClick(level, pos, player, stack);
     }
 
-    private boolean isAreaMode(ItemStack stack) {
-        return stack.getOrDefault(ModDataComponents.AREA_UPGRADE_MODE.get(), false);
+    @Override
+    protected boolean supportsAreaMode() {
+        return false;
     }
 
     @Override
     @OnlyIn(Dist.CLIENT)
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         if (TooltipHelper.isDescriptionKeyDown()) {
-            tooltip.add(Component.translatable("tooltip.mekanism_card.super_fusion.description")
-                    .withStyle(ChatFormatting.GRAY));
-            tooltip.add(Component.translatable("tooltip.mekanism_card.super_fusion.tier_usage")
-                    .withStyle(ChatFormatting.DARK_GREEN));
-            tooltip.add(Component.translatable("tooltip.mekanism_card.super_fusion.module_usage")
-                    .withStyle(ChatFormatting.GOLD));
-            tooltip.add(Component.translatable("tooltip.mekanism_card.super_fusion.selection_usage")
-                    .withStyle(ChatFormatting.AQUA));
-            tooltip.add(Component.translatable("tooltip.mekanism_card.super_fusion.memory_clear_usage")
-                    .withStyle(ChatFormatting.RED));
-            tooltip.add(Component.translatable("tooltip.mekanism_card.network_support")
-                    .withStyle(ChatFormatting.AQUA));
-            tooltip.add(Component.translatable("tooltip.mekanism_card.network_priority")
-                    .withStyle(ChatFormatting.RED));
-            tooltip.add(Component.translatable("tooltip.mekanism_card.middle_click_install")
-                    .withStyle(ChatFormatting.GOLD));
-            super.appendHoverText(stack, context, tooltip, flag);
+            tooltip.add(TooltipHelper.shortcutLine("tooltip.mekanism_card.shortcut.fusion_execute",
+                    "tooltip.mekanism_card.key.right_machine", "tooltip.mekanism_card.key.shift_right_machine"));
+            tooltip.add(TooltipHelper.shortcutLine("tooltip.mekanism_card.shortcut.fusion_settings",
+                    "tooltip.mekanism_card.key.left_air", "tooltip.mekanism_card.key.shift_left_air"));
+            tooltip.add(TooltipHelper.selectionShortcutLine("tooltip.mekanism_card.shortcut.fusion_batch"));
+            tooltip.add(TooltipHelper.shortcutLine("tooltip.mekanism_card.shortcut.memory_clear",
+                    "tooltip.mekanism_card.key.shift_right_air"));
+            tooltip.add(TooltipHelper.shortcutLine("tooltip.mekanism_card.shortcut.middle_install",
+                    "tooltip.mekanism_card.key.middle_machine", "tooltip.mekanism_card.key.ultimine_middle"));
             return;
         }
 
@@ -167,27 +175,11 @@ public class SuperFusionCard extends UltimateTierInstaller {
         FusionMode fusionMode = getFusionMode(stack);
         tooltip.add(Component.translatable("tooltip.mekanism_card.super_fusion.current_mode", fusionMode.getDisplayName())
                 .withStyle(fusionMode.getColor()));
-        tooltip.add(Component.translatable("tooltip.mekanism_card.super_fusion.range_mode",
-                        isAreaMode(stack)
-                                ? Component.translatable("tooltip.mekanism_card.super_fusion.range_area")
-                                : Component.translatable("tooltip.mekanism_card.super_fusion.range_single"))
-                .withStyle(ChatFormatting.GOLD));
-
-        Player player = Minecraft.getInstance().player;
-        Upgrade upgrade = player == null ? null : moduleConfigurator().getSelectedUpgradeFromInventory(player);
-        if (upgrade != null) {
-            tooltip.add(Component.translatable("tooltip.mekanism_card.super_fusion.module_upgrade", Component.translatable(upgrade.getTranslationKey()))
-                    .withStyle(ChatFormatting.AQUA));
-        } else {
-            tooltip.add(Component.translatable("tooltip.mekanism_card.super_fusion.module_upgrade_none")
-                    .withStyle(ChatFormatting.RED));
-        }
-
-        tooltip.add(Component.translatable("tooltip.mekanism_card.super_fusion.module_mode", getModuleMode().getDisplayName())
+        tooltip.add(Component.translatable("tooltip.mekanism_card.super_fusion.module_mode", getModuleMode(stack).getDisplayName())
                 .withStyle(ChatFormatting.GOLD));
     }
 
-    private MassUpgradeConfigurator moduleConfigurator() {
+    public MassUpgradeConfigurator moduleConfigurator() {
         return (MassUpgradeConfigurator) MekanismCard.MASS_UPGRADE_CONFIGURATOR.get();
     }
 }

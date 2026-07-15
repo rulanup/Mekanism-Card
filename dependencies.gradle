@@ -4,6 +4,7 @@ dependencies {
     compileOnly "mekanism:Mekanism:${mekanism_version}:generators"
     compileOnly "org.appliedenergistics:guideme:${guideme_version}:api"
     compileOnly "org.appliedenergistics:appliedenergistics2:${ae2_version}:api"
+    compileOnly "maven.modrinth:jade:${jade_version}"
 
     // Core runtime dependencies.
     localRuntime "org.appliedenergistics:guideme:${guideme_version}"
@@ -33,6 +34,8 @@ dependencies {
         exclude group: "info.journeymap", module: "journeymap-api-neoforge"
     }
     localRuntime "curse.maven:mekanism-268560:${mekanism_file}"
+    localRuntime "curse.maven:mekanism-more-machine-1275257:7919872"
+    localRuntime "curse.maven:mekanism-extras-1026040:7921191"
     localRuntime "curse.maven:mekanism-empowered-core-1256399:8064667"
     localRuntime "curse.maven:mekanism-empowered-1256390:8064666"
     localRuntime "curse.maven:jdte-1566414:8424741"

@@ -6,7 +6,7 @@ categories:
 navigation:
   title: 存储卡
   icon: mekanism_card:memory_card
-  parent: tools.md
+  parent: index.md
   position: 2
 ---
 
@@ -33,6 +33,13 @@ navigation:
 - 右键机械：将存储的配置应用到目标机械。需要时会消耗升级卡。
 
 目标机械类型必须匹配，并且背包或绑定的 AE2/QIO 网络中需要有足够的升级卡。
+
+## 批量粘贴
+
+- 按住选区键（默认左 Ctrl）并左键两个角点：向长方体内同类型机器批量粘贴。
+- 按住 FTB Ultimine 连锁键右键机器：向其当前选区内同类型机器批量粘贴。
+
+普通右键只会粘贴准星指向的单台机器。
 
 ## 网络存储
 

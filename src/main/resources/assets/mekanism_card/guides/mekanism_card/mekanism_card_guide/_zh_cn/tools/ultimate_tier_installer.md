@@ -6,7 +6,7 @@ categories:
 navigation:
   title: 终极等级安装器
   icon: mekanism_card:ultimate_tier_installer
-  parent: tools.md
+  parent: index.md
   position: 3
 ---
 
@@ -57,9 +57,11 @@ navigation:
 
 这样可以无缝跨所有存储系统进行升级。
 
-## 区域升级模式
+## 批量升级
 
-按 **Ctrl + 右键** 切换区域模式。在此模式下，右键一台机器会将所有**相连的机器**，也就是方块挨着方块的机器，一次性升级到终极等级。
+- 右键机器：升级该机器。
+- 按住选区键（默认左 Ctrl）并左键两个角点：升级长方体内兼容的机器。
+- 按住 FTB Ultimine 连锁键右键机器：升级其当前选中的全部方块。
 
 每台机器都会消耗相应的能量和升级物品。
 

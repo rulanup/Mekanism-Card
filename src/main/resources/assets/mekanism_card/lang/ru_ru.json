@@ -4,7 +4,7 @@
   "itemGroup.mekanism_card": "Карта Mekanism",
 
   "mekanism_card.mode.install": "Режим установки",
-  "mekanism_card.mode.remove": "Режим удаления",
+  "mekanism_card.mode.clear": "Режим очистки",
 
   "mekanism_card.memory_card.mode.copy": "Режим копирования",
   "mekanism_card.memory_card.mode.paste": "Режим вставки",
@@ -42,7 +42,7 @@
 
   "tooltip.mekanism_card.current_upgrade": "Текущее улучшение: %s",
   "tooltip.mekanism_card.no_upgrade": "Текущее улучшение: Не выбрано",
-  "tooltip.mekanism_card.air_click_switch_mode": "ПКМ по воздуху: Переключить режим установки/удаления",
+  "tooltip.mekanism_card.air_click_switch_mode": "ПКМ по воздуху: Переключить режим установки/очистки",
   "tooltip.mekanism_card.sneak_air_click_switch_selection": "Присев+ПКМ по воздуху: Переключить режим выделения",
   "tooltip.mekanism_card.current_mode": "Текущий режим: %s | %s",
   "tooltip.mekanism_card.mode.radius": "Режим радиуса",

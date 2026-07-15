@@ -1,9 +1,13 @@
 package com.mekanism.card.item;
 
+import com.mekanism.card.extras.ExtrasIntegration;
+import com.mekanism.card.moremachine.MoreMachineIntegration;
 import com.mekanism.card.util.NetworkItemSource;
 import mekanism.api.IConfigCardAccess;
 import mekanism.api.SerializationConstants;
 import mekanism.api.Upgrade;
+import mekanism.api.tier.BaseTier;
+import mekanism.common.block.attribute.Attribute;
 import mekanism.common.lib.frequency.FrequencyType;
 import mekanism.common.lib.frequency.IFrequencyItem;
 import mekanism.common.tile.base.TileEntityMekanism;
@@ -26,10 +30,13 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,16 +53,52 @@ public class MemoryCard extends net.minecraft.world.item.Item implements IFreque
         return tag.contains("MachineData");
     }
 
+    public static Map<Upgrade, Integer> getStoredUpgradeLevels(ItemStack stack) {
+        CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        Map<Upgrade, Integer> levels = new EnumMap<>(Upgrade.class);
+        if (!tag.contains("MachineData")) {
+            return levels;
+        }
+        CompoundTag machineData = tag.getCompound("MachineData");
+        int sourceMachineCount = Math.max(1, machineData.getInt("MachineCount"));
+        ListTag upgradeList = machineData.getList(
+                SerializationConstants.UPGRADES, net.minecraft.nbt.Tag.TAG_COMPOUND);
+        for (int index = 0; index < upgradeList.size(); index++) {
+            CompoundTag upgradeTag = upgradeList.getCompound(index);
+            Upgrade upgrade = findStoredUpgrade(upgradeTag);
+            if (upgrade != null) {
+                int amount = Math.min(upgrade.getMax(),
+                        upgradeTag.getInt(SerializationConstants.AMOUNT) / sourceMachineCount);
+                if (amount > 0) {
+                    levels.put(upgrade, amount);
+                }
+            }
+        }
+        return levels;
+    }
+
+    @Nullable
+    public static Block getStoredSourceBlock(ItemStack stack) {
+        CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        if (!tag.contains("MachineData")) {
+            return null;
+        }
+        String sourceBlockType = tag.getCompound("MachineData").getString("SourceBlockType");
+        ResourceLocation id = ResourceLocation.tryParse(sourceBlockType);
+        return id == null ? null : BuiltInRegistries.BLOCK.getOptional(id).orElse(null);
+    }
+
     @Override
     @OnlyIn(Dist.CLIENT)
     public void appendHoverText(ItemStack stack, net.minecraft.world.item.Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         if (TooltipHelper.isDescriptionKeyDown()) {
-            tooltip.add(Component.translatable("tooltip.mekanism_card.memory_card.right_click_copy")
-                    .withStyle(ChatFormatting.DARK_GREEN));
-            tooltip.add(Component.translatable("tooltip.mekanism_card.memory_card.right_click_paste")
-                    .withStyle(ChatFormatting.DARK_AQUA));
-            tooltip.add(Component.translatable("tooltip.mekanism_card.memory_card.sneak_air_click_clear")
-                    .withStyle(ChatFormatting.RED));
+            tooltip.add(TooltipHelper.shortcutLine("tooltip.mekanism_card.shortcut.memory_copy",
+                    "tooltip.mekanism_card.key.shift_right_machine"));
+            tooltip.add(TooltipHelper.shortcutLine("tooltip.mekanism_card.shortcut.memory_paste",
+                    "tooltip.mekanism_card.key.right_machine"));
+            tooltip.add(TooltipHelper.shortcutLine("tooltip.mekanism_card.shortcut.memory_clear",
+                    "tooltip.mekanism_card.key.shift_right_air"));
+            tooltip.add(TooltipHelper.selectionShortcutLine("tooltip.mekanism_card.shortcut.memory_batch"));
             tooltip.add(Component.translatable("tooltip.mekanism_card.network_support")
                     .withStyle(ChatFormatting.AQUA));
             tooltip.add(Component.translatable("tooltip.mekanism_card.network_priority")
@@ -110,6 +153,7 @@ public class MemoryCard extends net.minecraft.world.item.Item implements IFreque
                     if (upgradeLevel > 0) {
                         CompoundTag upgradeTag = new CompoundTag();
                         upgradeTag.putInt(SerializationConstants.TYPE, upgrade.ordinal());
+                        upgradeTag.putString("UpgradeName", upgrade.getSerializedName());
                         upgradeTag.putInt(SerializationConstants.AMOUNT, upgradeLevel);
                         upgradeList.add(upgradeTag);
                     }
@@ -179,8 +223,6 @@ public class MemoryCard extends net.minecraft.world.item.Item implements IFreque
 
         CompoundTag machineData = tag.getCompound("MachineData");
         String sourceBlockType = machineData.getString("SourceBlockType");
-        int sourceMachineCount = machineData.getInt("MachineCount");
-
         Block targetBlock = level.getBlockState(pos).getBlock();
         String targetBlockType = BuiltInRegistries.BLOCK.getKey(targetBlock).toString();
 
@@ -190,27 +232,100 @@ public class MemoryCard extends net.minecraft.world.item.Item implements IFreque
             return;
         }
 
-        List<BlockPos> connectedMachines = findConnectedMachines(level, pos, targetBlock);
+        pasteToMachines(level, List.of(pos), player, stack, machineData, true);
+    }
 
-        if (connectedMachines.isEmpty()) {
+    public static void handleBatchPasteStatic(Level level, Collection<BlockPos> positions, Player player, ItemStack stack) {
+        CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        if (!tag.contains("MachineData")) {
+            player.displayClientMessage(Component.translatable("message.mekanism_card.memory_card.no_data")
+                    .withStyle(ChatFormatting.RED), true);
+            return;
+        }
+
+        CompoundTag machineData = tag.getCompound("MachineData");
+        String sourceBlockType = machineData.getString("SourceBlockType");
+        List<BlockPos> targets = new ArrayList<>();
+        for (BlockPos targetPos : new LinkedHashSet<>(positions)) {
+            if (!level.hasChunkAt(targetPos)) {
+                continue;
+            }
+            String targetBlockType = BuiltInRegistries.BLOCK.getKey(level.getBlockState(targetPos).getBlock()).toString();
+            if (level.getBlockEntity(targetPos) instanceof IConfigCardAccess
+                    && (sourceBlockType.isEmpty() || sourceBlockType.equals(targetBlockType))) {
+                targets.add(targetPos);
+            }
+        }
+        if (targets.isEmpty()) {
             player.displayClientMessage(Component.translatable("message.mekanism_card.memory_card.paste_failed")
                     .withStyle(ChatFormatting.YELLOW), true);
             return;
         }
+        pasteToMachines(level, targets, player, stack, machineData, true);
+    }
+
+    public static void handleFullPasteStatic(Level level, BlockPos pos, Player player, ItemStack stack,
+                                             SuperFusionCard fusionCard) {
+        handleBatchFullPasteStatic(level, List.of(pos), player, stack, fusionCard);
+    }
+
+    public static void handleBatchFullPasteStatic(Level level, Collection<BlockPos> positions, Player player,
+                                                  ItemStack stack, SuperFusionCard fusionCard) {
+        CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        if (!tag.contains("MachineData")) {
+            player.displayClientMessage(Component.translatable("message.mekanism_card.memory_card.no_data")
+                    .withStyle(ChatFormatting.RED), true);
+            return;
+        }
+        CompoundTag machineData = tag.getCompound("MachineData");
+        Block sourceBlock = getStoredSourceBlock(stack);
+        BaseTier desiredTier = sourceBlock == null ? null : Attribute.getBaseTier(sourceBlock.builtInRegistryHolder());
+        String desiredAdvancedTier = sourceBlock == null ? null
+                : ExtrasIntegration.getAdvancedTierName(sourceBlock.builtInRegistryHolder());
+        if (sourceBlock == null || desiredTier == null) {
+            player.displayClientMessage(Component.translatable("message.mekanism_card.ultimate_installer.no_tier")
+                    .withStyle(ChatFormatting.RED), true);
+            return;
+        }
+
+        boolean fuzzy = fusionCard.isFuzzyMode(stack);
+        List<BlockPos> upgradedTargets = new ArrayList<>();
+        for (BlockPos targetPos : new LinkedHashSet<>(positions)) {
+            if (!level.hasChunkAt(targetPos)) {
+                continue;
+            }
+            BlockEntity target = level.getBlockEntity(targetPos);
+            if (!(target instanceof TileEntityMekanism)
+                    || !fuzzy && (!(target instanceof IConfigCardAccess)
+                    || !isSameMachineFamily(sourceBlock, level.getBlockState(targetPos).getBlock()))) {
+                continue;
+            }
+            if (fusionCard.upgradeToTier(level, targetPos, player, stack, desiredTier, desiredAdvancedTier)) {
+                upgradedTargets.add(targetPos);
+            }
+        }
+        if (upgradedTargets.isEmpty()) {
+            player.displayClientMessage(Component.translatable("message.mekanism_card.memory_card.paste_failed")
+                    .withStyle(ChatFormatting.YELLOW), true);
+            return;
+        }
+        pasteToMachines(level, upgradedTargets, player, stack, machineData, !fuzzy);
+    }
+
+    private static void pasteToMachines(Level level, List<BlockPos> connectedMachines, Player player,
+                                        ItemStack stack, CompoundTag machineData, boolean includeConfiguration) {
 
         Map<Upgrade, Integer> perMachineUpgrade = new EnumMap<>(Upgrade.class);
         if (machineData.contains(SerializationConstants.UPGRADES)) {
             ListTag upgradeList = machineData.getList(SerializationConstants.UPGRADES, net.minecraft.nbt.Tag.TAG_COMPOUND);
-            int machineCount = connectedMachines.size();
             int originalMachineCount = machineData.getInt("MachineCount");
             if (originalMachineCount <= 0) originalMachineCount = 1;
             for (int i = 0; i < upgradeList.size(); i++) {
                 CompoundTag upgradeTag = upgradeList.getCompound(i);
-                int typeOrdinal = upgradeTag.getInt(SerializationConstants.TYPE);
                 int totalAmount = upgradeTag.getInt(SerializationConstants.AMOUNT);
-                if (typeOrdinal >= 0 && typeOrdinal < Upgrade.values().length && totalAmount > 0 && machineCount > 0) {
-                    Upgrade upgrade = Upgrade.values()[typeOrdinal];
-                    int amountPerMachine = (totalAmount * machineCount) / originalMachineCount;
+                Upgrade upgrade = findStoredUpgrade(upgradeTag);
+                if (upgrade != null && totalAmount > 0) {
+                    int amountPerMachine = totalAmount / originalMachineCount;
                     amountPerMachine = Math.min(amountPerMachine, upgrade.getMax());
                     perMachineUpgrade.put(upgrade, amountPerMachine);
                 }
@@ -272,7 +387,7 @@ public class MemoryCard extends net.minecraft.world.item.Item implements IFreque
                 }
             }
 
-            if (machineData.contains("ConfigData") && be instanceof IConfigCardAccess configAccess) {
+            if (includeConfiguration && machineData.contains("ConfigData") && be instanceof IConfigCardAccess configAccess) {
                 CompoundTag configData = machineData.getCompound("ConfigData");
                 configAccess.setConfigurationData(level.registryAccess(), player, configData);
                 configAccess.configurationDataSet();
@@ -300,6 +415,47 @@ public class MemoryCard extends net.minecraft.world.item.Item implements IFreque
             player.displayClientMessage(Component.translatable("message.mekanism_card.memory_card.paste_failed")
                     .withStyle(ChatFormatting.YELLOW), true);
         }
+    }
+
+    private static boolean isSameMachineFamily(Block source, Block target) {
+        return MoreMachineIntegration.isSameMachineFamily(source, target)
+                || normalizeMachineFamily(BuiltInRegistries.BLOCK.getKey(source).getPath())
+                .equals(normalizeMachineFamily(BuiltInRegistries.BLOCK.getKey(target).getPath()));
+    }
+
+    private static String normalizeMachineFamily(String path) {
+        String normalized = path.toLowerCase(java.util.Locale.ROOT);
+        String[] prefixes = {
+                "creative_", "multiversal_", "dense_", "quantum_", "overclocked_",
+                "infinite_", "cosmic_", "supreme_", "absolute_", "ultimate_",
+                "elite_", "advanced_", "basic_"
+        };
+        boolean changed;
+        do {
+            changed = false;
+            for (String prefix : prefixes) {
+                if (normalized.startsWith(prefix)) {
+                    normalized = normalized.substring(prefix.length());
+                    changed = true;
+                    break;
+                }
+            }
+        } while (changed);
+        return normalized;
+    }
+
+    @Nullable
+    private static Upgrade findStoredUpgrade(CompoundTag upgradeTag) {
+        if (upgradeTag.contains("UpgradeName")) {
+            String name = upgradeTag.getString("UpgradeName");
+            for (Upgrade upgrade : Upgrade.values()) {
+                if (upgrade.getSerializedName().equals(name)) {
+                    return upgrade;
+                }
+            }
+        }
+        int ordinal = upgradeTag.getInt(SerializationConstants.TYPE);
+        return ordinal >= 0 && ordinal < Upgrade.values().length ? Upgrade.values()[ordinal] : null;
     }
 
     private static int countTotalUpgradeCards(Player player) {
@@ -352,36 +508,6 @@ public class MemoryCard extends net.minecraft.world.item.Item implements IFreque
         for (Map.Entry<Upgrade, Integer> entry : required.entrySet()) {
             itemSource.consumeUpgrade(entry.getKey(), entry.getValue());
         }
-    }
-
-    private static List<BlockPos> findConnectedMachines(Level level, BlockPos start, Block targetBlock) {
-        Set<BlockPos> machines = new HashSet<>();
-        Set<BlockPos> visited = new HashSet<>();
-        java.util.Queue<BlockPos> queue = new java.util.ArrayDeque<>();
-
-        queue.add(start);
-        visited.add(start);
-
-        while (!queue.isEmpty()) {
-            BlockPos current = queue.poll();
-            if (level.getBlockEntity(current) instanceof TileEntityMekanism &&
-                    level.getBlockState(current).getBlock() == targetBlock) {
-                machines.add(current);
-            }
-
-            for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
-                BlockPos neighbor = current.relative(dir);
-                if (!visited.contains(neighbor)) {
-                    if (level.getBlockState(neighbor).getBlock() == targetBlock &&
-                            level.getBlockEntity(neighbor) instanceof TileEntityMekanism) {
-                        visited.add(neighbor);
-                        queue.add(neighbor);
-                    }
-                }
-            }
-        }
-
-        return new ArrayList<>(machines);
     }
 
     private static String upgradeKeyToSimpleName(Upgrade upgrade) {

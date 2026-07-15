@@ -6,7 +6,7 @@ categories:
 navigation:
   title: Mass Upgrade Configurator
   icon: mekanism_card:mass_upgrade_configurator
-  parent: tools.md
+  parent: index.md
   position: 1
 ---
 
@@ -14,15 +14,15 @@ navigation:
 
 <ItemImage id="mekanism_card:mass_upgrade_configurator" />
 
-The Mass Upgrade Configurator is a powerful tool that allows you to batch install or remove upgrades on multiple Mekanism machines at once.
+The Mass Upgrade Configurator batches installation or clearing of upgrades across multiple Mekanism machines.
 
 <RecipeFor id="mekanism_card:mass_upgrade_configurator" />
 
-## Selecting Upgrade
+## Upgrade Sources
 
 Before using the tool, you need to have upgrade modules in your inventory or in a bound AE2/QIO network.
 
-The tool automatically detects upgrade modules from your inventory first, then from AE2, then from QIO. The item tooltip displays the current inventory-selected upgrade type.
+Shift + right-click a source machine to save its installed upgrade types and levels. Install Mode synchronizes targets to that saved profile using inventory, AE2, then QIO materials.
 
 ## Network Storage
 
@@ -36,32 +36,25 @@ The configurator can pull upgrade modules from a bound AE2 network or QIO freque
 
 The configurator has two modes:
 
-- Install Mode: installs upgrades on machines.
-- Remove Mode: removes upgrades from machines.
+- Install Mode: matches each compatible upgrade type to the saved level. Surplus upgrades are returned to the player.
+- Clear Mode: removes all installed upgrade types and returns them to the player.
 
-Right-click in air to switch between modes.
+Sneak + left-click air to switch between modes.
 
-## Radius Mode
+## Operations
 
-In Radius Mode:
+- Right-click a machine: apply the current mode to that machine.
+- Shift + right-click a machine: save its upgrade profile.
+- Hold the selection key (Left Ctrl by default) and left-click two corners: immediately process that cuboid.
+- Hold the FTB Ultimine key while right-clicking: process all blocks in its current selection.
 
-- Sneak + right-click machine: apply the operation to all adjacent machines.
-- Right-click air: switch install/remove mode.
-- Sneak + right-click air: toggle selection mode.
+## Quick Selection
 
-## Selection Mode
-
-In Selection Mode:
-
-- Sneak + right-click: set the first or second corner of the selection.
-- Right-click: execute the batch operation on all machines in the selection.
-
-Select two corners to define a cubic area, then right-click a machine to execute.
+After the first corner is selected, a red outline previews the area up to the block under the crosshair. Left-click the second corner while holding the selection key to execute.
 
 ## Middle-Click Shortcut
 
 - Middle-click a machine: automatically install all supported upgrade modules on the machine (each to max capacity).
-- Middle-click in Radius Mode: batch install all supported upgrades on all adjacent machines.
-- Middle-click in Selection Mode: batch install all supported upgrades on all machines in the selection area.
+- Hold the FTB Ultimine key while middle-clicking: batch install all supported upgrades in its current selection.
 
 ![Mass Upgrade Configurator preview](mass_upgrade_configurator_guide.png)

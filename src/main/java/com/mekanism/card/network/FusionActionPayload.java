@@ -22,10 +22,6 @@ public record FusionActionPayload(int actionId) implements CustomPacketPayload {
         return new FusionActionPayload(Action.CYCLE_MODE.ordinal());
     }
 
-    public static FusionActionPayload toggleSelection() {
-        return new FusionActionPayload(Action.TOGGLE_SELECTION.ordinal());
-    }
-
     public static FusionActionPayload clearMemory() {
         return new FusionActionPayload(Action.CLEAR_MEMORY.ordinal());
     }
@@ -45,8 +41,6 @@ public record FusionActionPayload(int actionId) implements CustomPacketPayload {
         Action action = Action.byId(payload.actionId());
         if (action == Action.CYCLE_MODE) {
             fusionCard.cycleFusionMode(stack, player);
-        } else if (action == Action.TOGGLE_SELECTION) {
-            fusionCard.toggleModuleSelectionMode(stack, player);
         } else if (action == Action.CLEAR_MEMORY) {
             fusionCard.clearMemoryData(stack, player);
         }
@@ -54,7 +48,6 @@ public record FusionActionPayload(int actionId) implements CustomPacketPayload {
 
     private enum Action {
         CYCLE_MODE,
-        TOGGLE_SELECTION,
         CLEAR_MEMORY;
 
         private static Action byId(int id) {

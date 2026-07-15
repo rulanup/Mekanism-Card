@@ -4,7 +4,7 @@
   "itemGroup.mekanism_card": "Cartao Mekanism",
 
   "mekanism_card.mode.install": "Modo Instalacao",
-  "mekanism_card.mode.remove": "Modo Remocao",
+  "mekanism_card.mode.clear": "Modo Limpeza",
 
   "mekanism_card.memory_card.mode.copy": "Modo Copiar",
   "mekanism_card.memory_card.mode.paste": "Modo Colar",
@@ -42,7 +42,7 @@
 
   "tooltip.mekanism_card.current_upgrade": "Upgrade atual: %s",
   "tooltip.mekanism_card.no_upgrade": "Upgrade atual: Nao selecionado",
-  "tooltip.mekanism_card.air_click_switch_mode": "Click direito no ar: Trocar modo instalacao/remocao",
+  "tooltip.mekanism_card.air_click_switch_mode": "Click direito no ar: Trocar modo instalacao/limpeza",
   "tooltip.mekanism_card.sneak_air_click_switch_selection": "Agachar+Click direito no ar: Trocar modo selecao",
   "tooltip.mekanism_card.current_mode": "Modo atual: %s | %s",
   "tooltip.mekanism_card.mode.radius": "Modo Raio",
