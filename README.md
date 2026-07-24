@@ -1,6 +1,7 @@
 # Mekanism Card
 
 [![Minecraft Version](https://img.shields.io/badge/Minecraft-1.21.1-blue)](https://www.minecraft.net)
+[![Release](https://img.shields.io/badge/Release-v2.4.2-blueviolet)](https://github.com/rulanup/Mekanism-Card/releases/tag/v2.4.2)
 [![Mekanism Version](https://img.shields.io/badge/Mekanism-10.7.14%2B-green)](https://www.curseforge.com/minecraft/mc-mods/mekanism)
 [![NeoForge Version](https://img.shields.io/badge/NeoForge-21.1%2B-orange)](https://neoforged.net/)
 [![License](https://img.shields.io/badge/License-GPL%20v3.0-blue)](LICENSE)
@@ -18,8 +19,10 @@ Batch operation tools for Mekanism mod - save hours of tedious clicking when bui
 - **Four Fusion Modes**: Cycle between Tier Install, Module Upgrade, Memory Copy/Paste, and Full Paste
 - **Quick Batch Selection**: Hold the selection key and left-click two corners to immediately process a cuboid area
 - **Middle-Click Quick Install**: Middle-click a machine to install all supported upgrades; hold the FTB Ultimine key for a batch
+- **Copied Tier Pasting**: Tier Install mode applies the copied machine's factory tier instead of upgrading targets to the highest available tier
 - **AE2 & QIO Integration**: Pulls tier installers and upgrade modules from bound networks
 - **Energy System**: Stores up to 200,000 FE; each tier upgrade consumes 1,000 FE
+- **Creative Tier Pasting**: Ignores installer and energy requirements without consuming resources
 
 **Controls**:
 - Left-click air: Open the configuration screen
@@ -36,12 +39,12 @@ Batch operation tools for Mekanism mod - save hours of tedious clicking when bui
 
 **One-click upgrade to Ultimate tier**
 
-- **Instant Upgrade**: Right-click any Mekanism machine to instantly upgrade it to Ultimate tier
-- **Energy System**: Stores up to 200,000 FE; each upgrade consumes 1,000 FE
-- **Chargeable**: Can be charged using Mekanism Energy Cubes or any compatible charger
-- **AE2 Integration**: Extract upgrade items from a bound AE2 network via Wireless Access Point
-- **QIO Integration**: Extract upgrade items from a bound QIO frequency
-- **Smart Consumption**: Items consumed in priority order: Inventory > AE2 > QIO
+- **Direct to Ultimate**: Right-click an untiered, Basic, Advanced, or Elite machine to upgrade it directly to standard Ultimate
+- **Hard Tier Cap**: Never upgrades into add-on tiers above Ultimate, including Infinite, Creative, or Paradox tiers
+- **Energy Only**: Stores up to 200,000 FE and consumes 1,000 FE per successfully upgraded machine
+- **No Installer Materials**: Does not require or consume Basic, Advanced, Elite, or Ultimate Tier Installer items
+- **Reusable Tool**: The Ultimate Tier Installer itself is never consumed
+- **No Network Binding**: Does not bind to AE2 or QIO; it uses only its own stored energy
 - **Batch Upgrading**: Hold the selection key and left-click two corners, or hold the FTB Ultimine key while right-clicking
 
 ### Mass Upgrade Configurator
@@ -169,11 +172,10 @@ Book + Mass Upgrade Configurator
 ### Ultimate Tier Installer
 
 1. **Craft the tool**: Use the recipe above to craft the Ultimate Tier Installer
-2. **Charge it**: Place it in a Mekanism Energy Cube or compatible charger (needs 1,000 FE per upgrade)
-3. **(Optional) Bind AE2 network**: Place the item in a Wireless Access Point's link slot
-4. **(Optional) Bind QIO frequency**: Sneak + Right-click any QIO block with a frequency selected
-5. **Execute upgrade**: Right-click a machine to upgrade it to Ultimate tier
-6. **Batch upgrade**: Hold the selection key and left-click two corners, or hold the FTB Ultimine key while right-clicking
+2. **Charge it**: Place it in a Mekanism Energy Cube or compatible charger (1,000 FE per successful machine)
+3. **Execute upgrade**: Right-click a lower-tier machine to upgrade it directly to standard Ultimate
+4. **Batch upgrade**: Hold the selection key and left-click two corners, or hold the FTB Ultimine key while right-clicking
+5. **Tier limit**: Machines at Ultimate or any higher add-on tier are left unchanged; no tier installer items are required
 
 ### Mass Upgrade Configurator
 

@@ -14,60 +14,33 @@ navigation:
 
 <ItemImage id="mekanism_card:ultimate_tier_installer" />
 
-The Ultimate Tier Installer instantly upgrades any Mekanism machine to Ultimate tier with a single right-click.
+The Ultimate Tier Installer upgrades a lower-tier Mekanism machine directly to the standard **Ultimate** tier.
 
 <RecipeFor id="mekanism_card:ultimate_tier_installer" />
 
+## Behavior
+
+- Works on untiered, Basic, Advanced, and Elite upgradeable machines.
+- Jumps directly to Ultimate; Basic, Advanced, Elite, and Ultimate Tier Installer items are not required.
+- The tool itself is reusable and is not consumed.
+- Ultimate is a hard cap. Machines already at Ultimate or any add-on tier above Ultimate are not changed.
+- It cannot upgrade machines to Absolute, Supreme, Cosmic, Infinite, Overclocked, Quantum, Dense, Multiversal, Creative, Paradox, or other extended tiers.
+
 ## Energy
 
-The item stores up to **200,000 FE** of energy. Each machine upgrade consumes **1,000 FE**.
+The item stores up to **200,000 FE**. Each successfully upgraded machine consumes **1,000 FE**. No energy is consumed when no compatible upgrade is performed.
 
-It can be charged using Mekanism Energy Cubes or any compatible energy charger. The energy bar on the item shows the current charge level.
-
-## Upgrade Items
-
-Upgrading machines requires tier installer items:
-
-- Basic Tier Installer: for single machines to Basic Factory.
-- Advanced Tier Installer: Basic to Advanced.
-- Elite Tier Installer: Advanced to Elite.
-- Ultimate Tier Installer: Elite to Ultimate.
-
-These items are consumed from your inventory first, then from connected networks.
-
-## AE2 Integration
-
-The installer can extract upgrade items from a bound **AE2 network**.
-
-To bind it, place the installer in a **Wireless Access Point** link slot. The tooltip shows the bound WAP position. Upgrade items are pulled from the AE2 network when your inventory does not have enough.
-
-## QIO Integration
-
-The installer can also extract upgrade items from a bound **QIO frequency**.
-
-To bind it, **sneak + right-click** any QIO block, such as a Drive Array or Dashboard, that has a frequency selected. The tooltip shows the bound QIO frequency name.
-
-## Consumption Priority
-
-When upgrading, items are consumed in this order:
-
-- Player inventory.
-- Bound AE2 network.
-- Bound QIO frequency.
-
-This allows seamless upgrades across all your storage systems.
+Charge it in a Mekanism Energy Cube or another compatible charger. This tool uses only its own stored energy and does not bind to or draw items from AE2 or QIO networks.
 
 ## Batch Upgrading
 
-- Right-click a machine: upgrade that machine.
-- Hold the selection key (Left Ctrl by default) and left-click two corners: upgrade compatible machines in that cuboid.
-- Hold the FTB Ultimine key while right-clicking: upgrade all blocks in its current selection.
+- Right-click a machine to upgrade it.
+- Hold the selection key (Left Ctrl by default) and left-click two corners to process compatible machines in the cuboid.
+- Hold the FTB Ultimine key and right-click a machine to process the selected blocks.
 
-Energy and upgrade items are consumed for each upgraded machine.
+Each successfully upgraded machine costs 1,000 FE and stops at Ultimate.
 
 ## Crafting
-
-The Ultimate Tier Installer is crafted with:
 
 - Top: Ultimate Control Circuit | Teleporter | Ultimate Control Circuit.
 - Middle: Ultimate Mechanical Pipe | Ultimate Energy Cube | Ultimate Mechanical Pipe.

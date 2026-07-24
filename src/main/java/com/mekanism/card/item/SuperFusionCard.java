@@ -2,6 +2,9 @@ package com.mekanism.card.item;
 
 import com.mekanism.card.MekanismCard;
 import com.mekanism.card.ModDataComponents;
+import com.mekanism.card.extras.ExtrasIntegration;
+import mekanism.api.tier.BaseTier;
+import mekanism.common.block.attribute.Attribute;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -10,6 +13,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import mekanism.common.tile.base.TileEntityMekanism;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
@@ -117,6 +122,76 @@ public class SuperFusionCard extends UltimateTierInstaller {
         return moduleConfigurator().getCurrentMode(stack);
     }
 
+    public void handleTierOperation(Level level, BlockPos pos, Direction face, Player player, ItemStack stack) {
+        Collection<BlockPos> positions = List.of(pos);
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
+                && com.mekanism.card.compat.UltimineCompat.isPressed(serverPlayer)) {
+            Collection<BlockPos> ultiminePositions = com.mekanism.card.compat.UltimineCompat.getCachedPositions(
+                    serverPlayer, pos, face);
+            if (ultiminePositions.size() > 1) {
+                positions = ultiminePositions;
+            }
+        }
+        TierOperationResult result = applyCopiedTier(level, positions, player, stack);
+        if (result.upgraded() == 0 && result.hadTypeMismatch()) {
+            player.displayClientMessage(Component.translatable("message.mekanism_card.super_fusion.tier_type_mismatch")
+                    .withStyle(ChatFormatting.YELLOW), true);
+        }
+    }
+
+    @Override
+    public void handleBatchSelection(Level level, Collection<BlockPos> positions, Player player, ItemStack stack) {
+        TierOperationResult result = applyCopiedTier(level, positions, player, stack);
+        if (result.upgraded() > 0) {
+            player.displayClientMessage(Component.translatable(
+                    "message.mekanism_card.ultimate_installer.selection_success", result.upgraded())
+                    .withStyle(ChatFormatting.GREEN), true);
+        } else if (result.hadTypeMismatch()) {
+            player.displayClientMessage(Component.translatable("message.mekanism_card.super_fusion.tier_type_mismatch")
+                    .withStyle(ChatFormatting.YELLOW), true);
+        }
+    }
+
+    private record TierOperationResult(int upgraded, boolean hadTypeMismatch, boolean hadCandidate) {
+    }
+
+    private TierOperationResult applyCopiedTier(Level level, Collection<BlockPos> positions, Player player,
+                                                ItemStack stack) {
+        Block sourceBlock = MemoryCard.getStoredSourceBlock(stack);
+        if (sourceBlock == null) {
+            player.displayClientMessage(Component.translatable("message.mekanism_card.memory_card.no_data")
+                    .withStyle(ChatFormatting.RED), true);
+            return new TierOperationResult(0, false, false);
+        }
+        BaseTier desiredTier = UltimateTierInstaller.getEffectiveBaseTier(sourceBlock.builtInRegistryHolder());
+        String desiredAdvancedTier = ExtrasIntegration.getAdvancedTierName(sourceBlock.builtInRegistryHolder());
+        if (desiredTier == null) {
+            player.displayClientMessage(Component.translatable("message.mekanism_card.ultimate_installer.no_tier")
+                    .withStyle(ChatFormatting.RED), true);
+            return new TierOperationResult(0, false, false);
+        }
+
+        boolean fuzzy = isFuzzyMode(stack);
+        boolean hadTypeMismatch = false;
+        boolean hadCandidate = false;
+        int upgraded = 0;
+        for (BlockPos targetPos : new java.util.LinkedHashSet<>(positions)) {
+            if (!level.hasChunkAt(targetPos)
+                    || !(level.getBlockEntity(targetPos) instanceof TileEntityMekanism)) {
+                continue;
+            }
+            if (!fuzzy && !MemoryCard.isSameMachineFamily(sourceBlock,
+                    level.getBlockState(targetPos).getBlock())) {
+                hadTypeMismatch = true;
+                continue;
+            }
+            hadCandidate = true;
+            if (upgradeToTier(level, targetPos, player, stack, desiredTier, desiredAdvancedTier)) {
+                upgraded++;
+            }
+        }
+        return new TierOperationResult(upgraded, hadTypeMismatch, hadCandidate);
+    }
     public void handleMemoryOperation(Level level, BlockPos pos, Direction face, Player player, ItemStack stack) {
         if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
                 && com.mekanism.card.compat.UltimineCompat.isPressed(serverPlayer)) {

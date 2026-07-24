@@ -79,7 +79,6 @@ public class MekanismCard {
             net.neoforged.fml.ModList.get().getModContainerById("ae2").ifPresent(container -> {
                 com.mekanism.card.ae2.UltimateInstallerLinkableHandler.register(MASS_UPGRADE_CONFIGURATOR.get());
                 com.mekanism.card.ae2.UltimateInstallerLinkableHandler.register(MEMORY_CARD.get());
-                com.mekanism.card.ae2.UltimateInstallerLinkableHandler.register(ULTIMATE_TIER_INSTALLER.get());
                 com.mekanism.card.ae2.UltimateInstallerLinkableHandler.register(SUPER_FUSION_CARD.get());
             });
         });

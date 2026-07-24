@@ -14,60 +14,33 @@ navigation:
 
 <ItemImage id="mekanism_card:ultimate_tier_installer" />
 
-Ultimate Tier Installer は、任意の Mekanism 機械を1回の右クリックで Ultimate 等級へアップグレードします。
+Ultimate Tier Installer は、低い等級の Mekanism 機械を標準の **Ultimate** 等級へ直接アップグレードします。
 
 <RecipeFor id="mekanism_card:ultimate_tier_installer" />
 
+## 動作
+
+- 等級なし、Basic、Advanced、Elite のアップグレード可能な機械に使用できます。
+- Basic、Advanced、Elite、Ultimate Tier Installer を材料として必要としません。
+- ツール自体は消費されず、繰り返し使用できます。
+- Ultimate が厳密な上限です。Ultimate またはそれより上の追加等級にある機械は変更しません。
+- Infinite、Creative、Paradox などの拡張等級にはアップグレードしません。
+
 ## エネルギー
 
-このアイテムは最大 **200,000 FE** のエネルギーを保存できます。機械1台のアップグレードごとに **1,000 FE** を消費します。
+最大 **200,000 FE** を保存し、アップグレードに成功した機械1台ごとに **1,000 FE** を消費します。
 
-Mekanism のエネルギーキューブや互換性のある充電器で充電できます。アイテムのエネルギーバーに現在の充電量が表示されます。
-
-## アップグレードアイテム
-
-機械のアップグレードには等級インストーラーが必要です：
-
-- Basic Tier Installer：単体機械から Basic Factory へ。
-- Advanced Tier Installer：Basic から Advanced へ。
-- Elite Tier Installer：Advanced から Elite へ。
-- Ultimate Tier Installer：Elite から Ultimate へ。
-
-これらのアイテムは、まずインベントリから消費され、その後接続されたネットワークから取り出されます。
-
-## AE2 連携
-
-インストーラーは、バインドされた **AE2 ネットワーク** からアップグレードアイテムを取り出せます。
-
-バインドするには、インストーラーを **Wireless Access Point** のリンクスロットに入れます。ツールチップにバインドされた WAP の位置が表示されます。インベントリのアイテムが不足している場合、AE2 ネットワークから取り出します。
-
-## QIO 連携
-
-インストーラーは、バインドされた **QIO 周波数** からもアップグレードアイテムを取り出せます。
-
-バインドするには、周波数が選択されている QIO ブロック、たとえば Drive Array や Dashboard を **スニーク + 右クリック** します。ツールチップにバインドされた QIO 周波数名が表示されます。
-
-## 消費優先度
-
-アップグレード時、アイテムは次の順番で消費されます：
-
-- プレイヤーのインベントリ。
-- バインドされた AE2 ネットワーク。
-- バインドされた QIO 周波数。
-
-これにより、複数のストレージシステムをまたいでスムーズにアップグレードできます。
+Mekanism の Energy Cube などで充電できます。このツールは自身のエネルギーだけを使い、AE2 または QIO ネットワークへのバインドやアイテムの取り出しは行いません。
 
 ## 一括アップグレード
 
 - 機械を右クリック：その機械をアップグレードします。
-- 選択キー（既定は左 Ctrl）を押しながら2つの角を左クリック：直方体内の対応する機械をアップグレードします。
-- FTB Ultimine キーを押しながら機械を右クリック：現在の選択範囲を一括アップグレードします。
+- 選択キー（既定は左 Ctrl）を押しながら2つの角を左クリック：範囲内の対応機械を処理します。
+- FTB Ultimine キーを押しながら右クリック：選択されたブロックを処理します。
 
-アップグレードされた各機械ごとにエネルギーとアップグレードアイテムを消費します。
+各機械は Ultimate で停止し、成功時に 1,000 FE を消費します。
 
 ## クラフト
-
-Ultimate Tier Installer のクラフト材料：
 
 - 上段：Ultimate Control Circuit | Teleporter | Ultimate Control Circuit。
 - 中段：Ultimate Mechanical Pipe | Ultimate Energy Cube | Ultimate Mechanical Pipe。

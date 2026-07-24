@@ -3,6 +3,7 @@ package com.mekanism.card;
 import com.mekanism.card.item.MassUpgradeConfigurator;
 import com.mekanism.card.item.MemoryCard;
 import com.mekanism.card.item.SuperFusionCard;
+import com.mekanism.card.item.UltimateTierInstaller;
 import mekanism.api.IConfigCardAccess;
 import mekanism.api.inventory.qio.IQIOFrequency;
 import mekanism.common.attachments.FrequencyAware;
@@ -82,7 +83,8 @@ public class ModEvents {
             }
 
             switch (fusionCard.getFusionMode(stack)) {
-                case TIER_INSTALL -> fusionCard.useOn(new UseOnContext(player, event.getHand(), event.getHitVec()));
+                case TIER_INSTALL -> fusionCard.handleTierOperation(event.getLevel(), event.getPos(),
+                        event.getFace() == null ? net.minecraft.core.Direction.UP : event.getFace(), player, stack);
                 case MODULE_UPGRADE -> fusionCard.handleModuleOperation(event.getLevel(), event.getPos(),
                         event.getFace() == null ? net.minecraft.core.Direction.UP : event.getFace(), player, stack);
                 case MEMORY_COPY -> fusionCard.handleMemoryOperation(event.getLevel(), event.getPos(),
@@ -90,6 +92,18 @@ public class ModEvents {
                 case FULL_PASTE -> fusionCard.handleFullOperation(event.getLevel(), event.getPos(),
                         event.getFace() == null ? net.minecraft.core.Direction.UP : event.getFace(), player, stack);
             }
+            event.setCanceled(true);
+            return;
+        }
+
+        if (stack.getItem() instanceof UltimateTierInstaller installer) {
+            if (!UltimateTierInstaller.isUpgradeTarget(event.getLevel(), event.getPos())) {
+                return;
+            }
+            if (!event.getLevel().isClientSide) {
+                installer.useOn(new UseOnContext(player, event.getHand(), event.getHitVec()));
+            }
+            event.setCancellationResult(InteractionResult.SUCCESS);
             event.setCanceled(true);
             return;
         }

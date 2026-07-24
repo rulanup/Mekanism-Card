@@ -279,7 +279,8 @@ public class MemoryCard extends net.minecraft.world.item.Item implements IFreque
         }
         CompoundTag machineData = tag.getCompound("MachineData");
         Block sourceBlock = getStoredSourceBlock(stack);
-        BaseTier desiredTier = sourceBlock == null ? null : Attribute.getBaseTier(sourceBlock.builtInRegistryHolder());
+        BaseTier desiredTier = sourceBlock == null ? null
+                : UltimateTierInstaller.getEffectiveBaseTier(sourceBlock.builtInRegistryHolder());
         String desiredAdvancedTier = sourceBlock == null ? null
                 : ExtrasIntegration.getAdvancedTierName(sourceBlock.builtInRegistryHolder());
         if (sourceBlock == null || desiredTier == null) {
@@ -417,7 +418,7 @@ public class MemoryCard extends net.minecraft.world.item.Item implements IFreque
         }
     }
 
-    private static boolean isSameMachineFamily(Block source, Block target) {
+    public static boolean isSameMachineFamily(Block source, Block target) {
         return MoreMachineIntegration.isSameMachineFamily(source, target)
                 || normalizeMachineFamily(BuiltInRegistries.BLOCK.getKey(source).getPath())
                 .equals(normalizeMachineFamily(BuiltInRegistries.BLOCK.getKey(target).getPath()));
